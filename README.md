@@ -1,4 +1,4 @@
-# 猫头鹰专注
+# iRIXI 猫头鹰番茄钟
 
 写下这次想做的一件事，选好时间，和红围巾猫头鹰一起开始。它会喝茶、眨眼、安静地陪着你；专注时动作放轻，暂停时停下来。
 
@@ -19,7 +19,14 @@
 
 ## 运行
 
-准备 Node.js 22.12 或更高版本，下载项目后，在项目目录执行：
+准备 Node.js 22.12 或更高版本。下载项目，或用 Git 获取源码：
+
+```sh
+git clone https://github.com/Irixil/irixi-owl-focus.git
+cd irixi-owl-focus
+```
+
+在项目目录执行：
 
 ```sh
 npm ci
