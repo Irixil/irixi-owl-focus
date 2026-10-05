@@ -95,14 +95,24 @@ function drawRegisteredHeadOverlay(textures,s){
  const anchor=rigPoint(0,0,s);ctx.save();ctx.imageSmoothingEnabled=true;ctx.translate(anchor.x,anchor.y);ctx.scale(778/800,879/904);ctx.drawImage(image,0,0);ctx.restore();
 }
 function ground(){ctx.save();ctx.globalAlpha=.18;ctx.fillStyle='#d8c8ad';ctx.beginPath();ctx.ellipse(627,1150,337,47,0,0,2*Math.PI);ctx.fill();ctx.restore()}
-function render(t,focus=false){const sourceTime=t/1.25,isIdle=sourceTime>=7.8&&!focus,s=isIdle?idleState(sourceTime-7.8,t):state(sourceTime,focus);s.t=t;const p=cupPose(s);ctx.clearRect(0,0,900,1000);if(options.transparentBackground!==true){ctx.fillStyle='#fbf9f3';ctx.fillRect(0,0,900,1000);}
+function render(t,focus=false,interaction){const sourceTime=t/1.25,isIdle=sourceTime>=7.8&&!focus,s=isIdle?idleState(sourceTime-7.8,t):state(sourceTime,focus);s.t=t;
+ // Optional local attention; frozen default v7 curves and original atlases stay exact.
+ // A quiet front pose uses registered yaw artwork. During tea/large turns only
+ // a tiny rig nod responds, preserving the current cup/head contact trajectory.
+ if(interaction&&(interaction.x||interaction.y||interaction.blink||interaction.nod)){
+  const front=(s.pitch||0)<.001&&Math.abs(s.yaw||0)<.05&&s.raise<.01;
+  if(front){s.yaw=(Math.max(-1,Math.min(1,interaction.x||0)))*3.5;s.head-=Math.max(-1,Math.min(1,interaction.y||0))*1.8;}
+  s.head+=(interaction.nod||0)*2;
+  if(front&&Math.abs(s.yaw||0)<.05)s.blink=Math.max(s.blink||0,interaction.blink||0);
+ }
+ const p=cupPose(s);ctx.clearRect(0,0,900,1000);if(options.transparentBackground!==true){ctx.fillStyle='#fbf9f3';ctx.fillRect(0,0,900,1000);}
  if(options.showLabels!==false){ctx.textAlign='center';ctx.fillStyle='#a65640';ctx.font='500 19px "Noto Sans CJK SC", sans-serif';ctx.fillText('猫头鹰的慢时光',450,58);ctx.fillStyle='#b1a593';ctx.font='12px "Noto Sans CJK SC", sans-serif';ctx.fillText('更柔软的慢节奏 · 60fps 动作概念',450,82);}
  ctx.save();ctx.translate(23,110);ctx.scale(.681,.681);if(options.showGround!==false)ground();if(options.drawSeat?.(ctx,s)!==true)drawSprite('stool',...dest.stool);ctx.save();
- if((s.pitch||0)>.000001){drawPitchHead(s.pitch,s);drawTorso(s)}else if(isIdle&&Math.abs(s.yaw)>.00001){drawSmoothHead(s.yaw,s);drawTorso(s)}else{drawBody(s);if(isIdle)drawBlink(s.blink,s)}
+  if((s.pitch||0)>.000001){drawPitchHead(s.pitch,s);drawTorso(s)}else if(Math.abs(s.yaw||0)>.00001){drawSmoothHead(s.yaw,s);drawTorso(s)}else{drawBody(s);if(isIdle||s.blink)drawBlink(s.blink,s)}
  options.drawHeadOverlay?.(ctx,s,drawRegisteredHeadOverlay);options.drawFrontSeat?.(ctx,s);
  for(let name of ['legL','legR']){let b=dest[name],dy=bodyY(b[1],s)-b[1],dir=name==='legL'?1:-1,angle=dir*s.feet*(2.8/7.1)*Math.PI/180;drawSprite(name,b[0],b[1]+dy,b[2],b[3]*(1-.055*Math.max(0,dir*s.feet/7.1)),angle,.5)}
  steam(s,p);drawCup(p);drawArm('armL',s,p);drawArm('armR',s,p);ctx.restore();ctx.restore();if(options.showLabels!==false){ctx.fillStyle='#988b77';ctx.font='15px "Noto Sans CJK SC", sans-serif';ctx.fillText(s.phase,450,950);}return{state:s,cup:p,contactError:p.contact?Math.hypot(p.x-p.beak.x,p.y-p.beak.y):null};}
 
 
-return{duration,fps:60,renderAt:(t,{focus=false}={})=>render(Math.max(0,t),focus),stateAt:t=>{const v=t/1.25;const a=v>=7.8?idleState(v-7.8,t):state(v);a.t=t;return a},landmarks:yawData,pitchLandmarks:pitchData};
+return{duration,fps:60,renderAt:(t,{focus=false,interaction}={})=>render(Math.max(0,t),focus,interaction),stateAt:t=>{const v=t/1.25;const a=v>=7.8?idleState(v-7.8,t):state(v);a.t=t;return a},landmarks:yawData,pitchLandmarks:pitchData};
 }

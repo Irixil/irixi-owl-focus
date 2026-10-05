@@ -4,13 +4,15 @@ import { bindWidgetDrag } from './widget-drag.mjs';
 import { bindActivityRecords } from './activity-records.mjs';
 import { equipmentOptions } from './equipment-view.mjs';
 const $ = id => document.getElementById(id);
-const scene = createOwlScene({canvas:$('owl-canvas'),fallback:$('owl-fallback'),notice:$('motion-note'),onAppearance:look=>{$('equipment-summary').textContent=look.summary;}});
+const scene = createOwlScene({canvas:$('owl-canvas'),fallback:$('owl-fallback'),notice:$('motion-note'),interactionElement:$('owl-interaction'),roomElement:document.querySelector('main'),response:$('owl-response'),onAppearance:look=>{$('equipment-summary').textContent=look.summary;}});
 const compact = new URLSearchParams(location.search).get('mode') === 'compact';
 if (compact) document.body.classList.add('compact');
 const widget = new URLSearchParams(location.search).get('mode') === 'widget';
 if(widget){document.body.classList.add('widget');$('other-view').hidden=true;$('widget-size').hidden=false;$('widget-start').hidden=false;$('widget-task-slot').append($('task-setup'));$('widget-task-slot').append($('end'));}
-if(widget)$('more').addEventListener('toggle',()=>{
+$('more').addEventListener('toggle',()=>{
   const open=$('more').open;
+  scene.setInteractionPaused(open);
+  if(!widget)return;
   document.querySelector('header').inert=open;
   document.querySelector('.actions').inert=open;
   if(open)$('widget-task-slot').append($('error'));

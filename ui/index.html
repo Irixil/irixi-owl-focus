@@ -18,8 +18,11 @@
     </section>
     <section class="scene" aria-label="猫头鹰陪伴场景">
       <div class="room-window" aria-hidden="true"></div>
-      <canvas id="owl-canvas" width="900" height="1000" role="img" aria-label="红围巾猫头鹰坐在凳子上，捧着茶杯陪伴你" hidden></canvas>
-      <img id="owl-fallback" src="assets/concept-v4.png" alt="红围巾猫头鹰坐在凳子上，捧着杯子" />
+      <div id="owl-interaction" role="button" tabindex="0" aria-label="摸摸猫头鹰，和它打个招呼">
+        <canvas id="owl-canvas" width="900" height="1000" role="img" aria-label="红围巾猫头鹰坐在凳子上，捧着茶杯陪伴你" hidden></canvas>
+        <img id="owl-fallback" src="assets/concept-v4.png" alt="红围巾猫头鹰坐在凳子上，捧着杯子" />
+      </div>
+      <span id="owl-response" class="sr-only" role="status" aria-live="polite"></span>
     </section>
     <section class="actions">
       <label id="task-setup"><span class="sr-only">这次的一件事</span><input id="task" maxlength="200" placeholder="这次的一件事，例如读完一节书" /></label>

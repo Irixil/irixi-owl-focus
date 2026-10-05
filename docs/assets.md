@@ -12,6 +12,7 @@
 | `ui/assets/outfit/reading-chair-back.png`、`reading-chair-front.png` | 生成的阅读椅前后层 |
 | `ui/assets/outfit/provenance/manifest.json` | 最终装备尺寸和文件校验值，已去除私人交接标识 |
 | `docs/images/room-widget.png` | 本项目隔离应用中直接捕获的原生组件画面，新存档，无实际任务或 APP 记录 |
+| `ui/assets/room-paper.svg`、`room-window.svg` | 下一版本地候选的静态纸纹及正视窗，项目自行编写的 SVG，不含参考图像素 |
 
 角色和装备的发布使用当前项目自身已获准使用的生成素材。本仓库没有附带竞品图片或后续背景参考图。
 

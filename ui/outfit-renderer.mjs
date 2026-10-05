@@ -10,9 +10,9 @@ export function createOutfitRenderer(canvas,base,images={},options={}){
       drawHeadOverlay(_ctx,s,draw){if(appearance.accessory==='round-glasses')draw(glasses,s);},
     });
   return {
-    renderAt(seconds,{focus=false,appearance:next}={}){
+    renderAt(seconds,{focus=false,appearance:next,interaction}={}){
       appearance=next||{accessory:null,room:'stool'};
-      return renderer.renderAt(seconds,{focus});
+      return renderer.renderAt(seconds,{focus,interaction});
     },
   };
 }

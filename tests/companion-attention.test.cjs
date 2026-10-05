@@ -1,0 +1,42 @@
+'use strict';
+const test=require('node:test'),assert=require('node:assert/strict');
+test('attention stays bounded, settles, resets, rate-limits pats, and respects reduced motion',async()=>{
+ const {CompanionAttention}=await import('../ui/companion-attention.mjs'),a=new CompanionAttention();
+ a.target(5,-5);a.sample(0);let s;for(let t=20;t<=1400;t+=20)s=a.sample(t);
+ assert.equal(s.x,1);assert.equal(s.y,-1);assert.equal(s.animating,false);
+ assert.equal(a.activate(1500),true);assert.equal(a.activate(1600),false);
+ const closed=a.sample(1710);assert.equal(closed.blink,1);assert.equal(closed.x,0);assert.ok(closed.nod>0&&closed.nod<=1);
+ assert.equal(a.sample(2200).blink,0);a.reset();assert.equal(a.sample(2300).x,0);
+ a.setReduced(true);a.target(1,1);assert.equal(a.activate(3000),false);assert.deepEqual(a.sample(4000),{x:0,y:0,blink:0,nod:0,animating:false});
+ a.setReduced(false);assert.equal(a.sample(4020).x,0);
+});
+test('quick role taps and keyboard activate; long press, movement, drag, outside and cancellation do not',async()=>{
+ const {bindCompanionInput}=await import('../ui/companion-attention.mjs');
+ const emitter=()=>({listeners:new Map(),addEventListener(k,f){this.listeners.set(k,f);},removeEventListener(k){this.listeners.delete(k);},fire(k,e={}){this.listeners.get(k)?.(e);}});
+ const doc=emitter(),win=emitter(),element=emitter();let dragging=false,time=0,activated=0,resets=0;
+ doc.body={hasAttribute:()=>dragging};doc.defaultView=win;element.ownerDocument=doc;
+ const off=bindCompanionInput({element,locate:e=>({role:e.inside!==false,head:true,x:1,y:0}),onTarget(){},onActivate(){activated++;},onReset(){resets++;},now:()=>time});
+ const e=extra=>({button:0,pointerId:1,clientX:0,clientY:0,...extra});
+ const down=()=>element.fire('pointerdown',e()),up=extra=>doc.fire('pointerup',e(extra));
+ down();time+=100;up();assert.equal(activated,1);
+ down();time+=420;up();assert.equal(activated,1);
+ down();element.fire('pointermove',e({clientX:9}));time+=20;up();assert.equal(activated,1);
+ down();dragging=true;time+=50;up();dragging=false;assert.equal(activated,1);
+ down();time+=50;up({inside:false});assert.equal(activated,1);
+ down();doc.fire('pointercancel');time+=50;up();assert.equal(activated,1);
+ down();win.fire('blur');time+=50;up();assert.equal(activated,1);
+ element.inert=true;down();time+=50;up();assert.equal(activated,1);element.inert=false;
+ element.fire('keydown',{target:element,key:'Enter',preventDefault(){}});assert.equal(activated,2);
+ element.fire('keydown',{target:element,key:' ',repeat:true,preventDefault(){}});assert.equal(activated,2);
+ off();assert.ok(resets>=3);assert.equal(element.listeners.size+doc.listeners.size+win.listeners.size,0);
+});
+test('attention uses registered head artwork, preserves base poses and tea contact, and moves no seat',async()=>{
+ const {createOutfitRenderer}=await import('../ui/outfit-renderer.mjs'),{canvasFixture}=require('./helpers/canvas.cjs');
+ const f=canvasFixture(),renderer=createOutfitRenderer(f.canvas,{bodyAtlas:{tag:'body'},headAtlas:{tag:'heads'},pitchHead:{tag:'pitch'}},{},{makeCanvas:f.makeCanvas,showLabels:false});
+ const base=renderer.renderAt(0,{focus:true}),baseSeat=structuredClone(f.rootDraws.find(d=>d.image==='body'&&d.args[0]===793));f.reset();const gaze=renderer.renderAt(0,{focus:true,interaction:{x:1,y:1,nod:.5}});
+ assert.equal(gaze.state.yaw,3.5);assert.ok(Math.abs(gaze.state.head)<4);assert.equal(gaze.state.q,base.state.q);
+ const seat=f.rootDraws.find(d=>d.image==='body'&&d.args[0]===793);assert.deepEqual(seat,baseSeat);
+ assert.ok(f.allDraws.some(d=>d.image==='heads'),'registered directional texture is used');
+ const tea=renderer.renderAt(4.35,{interaction:{x:1,y:1,nod:1,blink:1}});assert.equal(tea.contactError,0);assert.equal(tea.state.yaw,undefined);
+ const blink=renderer.renderAt(0,{focus:true,interaction:{blink:1}});assert.equal(blink.state.blink,1);assert.equal(blink.state.raise,0);
+});

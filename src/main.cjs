@@ -4,11 +4,11 @@ const fs=require('node:fs'),path=require('node:path'),{isUtf8}=require('node:buf
 const {FileStore}=require('./store.cjs'),{FocusService}=require('./service.cjs'),{FocusController}=require('./focus-controller.cjs');
 const {ActivityService,ActivityFileStore}=require('./activity.cjs');
 const root=path.resolve(__dirname,'..');
-const verification=process.argv.includes('--verify-headless')?'flow':process.argv.includes('--verify-reopen')?'reopen':null;
+const verification=process.argv.includes('--verify-room')?'room':process.argv.includes('--verify-headless')?'flow':process.argv.includes('--verify-reopen')?'reopen':null;
 let verificationData;
 if(verification&&!process.env.OWL_FOCUS_DATA_DIR){
  const runtime=path.join(root,'.runtime'),context=path.join(runtime,'verification-context.json');fs.mkdirSync(runtime,{recursive:true});
- if(verification==='flow'){verificationData=fs.mkdtempSync(path.join(runtime,'verification-'));fs.writeFileSync(context,JSON.stringify({dataDir:verificationData}));}
+ if(verification!=='reopen'){verificationData=fs.mkdtempSync(path.join(runtime,'verification-'));fs.writeFileSync(context,JSON.stringify({dataDir:verificationData}));}
  else{try{verificationData=JSON.parse(fs.readFileSync(context)).dataDir;if(typeof verificationData!=='string'||path.dirname(verificationData)!==runtime||!path.basename(verificationData).startsWith('verification-'))throw Error('Invalid verification context');}catch{console.error('请先运行 npm run verify:ui，建立本地验证存档。');app.exit(1);}}
 }
 const data=path.resolve(process.env.OWL_FOCUS_DATA_DIR||verificationData||path.join(app.getPath('appData'),'IRiXi Owl Focus'));
@@ -30,12 +30,12 @@ function saveDefaults(value){
 }
 function openView(mode='standalone'){
  const previous=views.get(mode);if(previous&&!previous.isDestroyed()){if(!verification){previous.show();previous.focus();}return previous;}
- const compact=mode==='compact';const win=new BrowserWindow({width:compact?420:920,height:compact?600:820,minWidth:compact?350:700,minHeight:compact?520:640,
-  title:compact?'猫头鹰专注 · 小窗口':'猫头鹰专注',backgroundColor:'#B7CFAB',show:false,
+ const compact=mode==='compact',widget=mode==='widget'&&verification==='room';const win=new BrowserWindow({width:widget?386:compact?420:920,height:widget?538:compact?600:820,minWidth:widget?175:compact?350:700,minHeight:widget?120:compact?520:640,
+  title:compact?'iRIXI 猫头鹰番茄钟 · 小窗口':'iRIXI 猫头鹰番茄钟',backgroundColor:'#F6EDE6',show:false,
   webPreferences:{preload:path.join(__dirname,'preload.cjs'),contextIsolation:true,sandbox:true,nodeIntegration:false,webSecurity:true,backgroundThrottling:!verification,offscreen:Boolean(verification)}});
  views.set(mode,win);const off=controller.registerView(win.webContents);win.webContents.setWindowOpenHandler(()=>({action:'deny'}));win.webContents.on('will-navigate',e=>e.preventDefault());
  win.on('closed',()=>{off();views.delete(mode);});if(!verification)win.once('ready-to-show',()=>win.show());
- win.loadFile(path.join(root,'ui/index.html'),{query:{mode,shell:'standalone'}});return win;
+ win.loadFile(path.join(root,'ui/index.html'),{query:{mode,shell:widget?'embedded':'standalone'}});return win;
 }
 function checked(event){if(!controller.allowed(event))throw Error('未授权窗口');}
 function activitySnapshot(){return {...activity.snapshot(),available:false,reason:'独立版暂未接入真实前台 APP 查询。记录保持关闭；本机不采集 APP 活动。'};}
@@ -57,7 +57,9 @@ else{
    heartbeat=setInterval(()=>{try{service.tick();}catch(e){console.error('计时已停止：',e.message);}},1000);
    powerMonitor.on('suspend',()=>{activity.stop('系统休眠，记录保持关闭。');try{service.suspend();}catch(e){console.error(e.message);}});
    powerMonitor.on('resume',()=>{try{service.tick();}catch(e){console.error(e.message);}});
-   openView();if(verification)await require('../tests/native.electron.cjs').run({app,views,service,activity,root,data,phase:verification,openView});
+   const dragEvents=[];
+   if(verification==='room')ipcMain.handle('owl:drag',(e,value)=>{checked(e);dragEvents.push(value);return true;});
+   openView();if(verification)await require(verification==='room'?'../tests/room.electron.cjs':'../tests/native.electron.cjs').run({app,views,service,activity,root,data,phase:verification,openView,dragEvents});
   }catch(e){close();if(verification){fs.mkdirSync(path.join(root,'.runtime'),{recursive:true});fs.writeFileSync(path.join(root,'.runtime/verification-startup-failed.json'),JSON.stringify({error:e.stack}));console.error(e.stack);app.exit(1);}else{dialog.showErrorBox('专注存档未被覆盖',e.message);app.quit();}}
  });
  app.on('activate',()=>{if(service&&views.size===0&&!verification)openView();});

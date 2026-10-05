@@ -22,3 +22,19 @@ body.widget details[open] .secondary{top:32px}
 
 body.standalone main{grid-template-rows:80px minmax(0,1fr) auto}
 body.standalone .actions{min-height:100px}
+
+/* Local next candidate: paper sits behind the art and text, never over them. */
+:root{background:#F6EDE6;--paper:#F6EDE6;--ink:#403A32;--muted:#776C5E;--selection:#E7E5D6;--line:#D9CDBB;color:var(--ink)}
+main{background:linear-gradient(to bottom,#F6EDE6 0 var(--floor-line,74%),#F0E3D4 var(--floor-line,74%) 100%)}
+main::before{opacity:.035;mix-blend-mode:multiply;background:url('./assets/room-paper.svg') repeat;z-index:0}
+main::after{content:'';position:absolute;top:var(--floor-line,74%);left:0;right:0;height:1px;background:#BDA58635;pointer-events:none;z-index:0}
+output{color:#55664D;-webkit-text-stroke:0!important}
+#status{color:#766D60}
+.scene::after{display:none}
+#owl-interaction{position:absolute;inset:0;display:grid;place-items:center;z-index:1;touch-action:none;outline:none}
+#owl-interaction:focus-visible{outline:1.5px solid #6D795D;outline-offset:-4px;border-radius:8px}
+#owl-interaction canvas,#owl-interaction img{max-width:calc(100% - 8px)}
+.room-window{border:0!important;border-radius:0;transform:none;background:url('./assets/room-window.svg') center/100% 100% no-repeat;box-shadow:none!important;top:9%}
+.room-window::before,.room-window::after{display:none}
+.primary{background:#EFE5D6A6;border-color:#8B9474;box-shadow:1px 1px 0 #99866414}
+.primary:hover{background:#E7E6D49C}

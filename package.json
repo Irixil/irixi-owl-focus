@@ -12,6 +12,7 @@
     "start": "node scripts/start.cjs",
     "test": "node --test tests/*.test.cjs",
     "verify:ui": "node scripts/start.cjs --verify-headless",
+    "verify:room": "node scripts/start.cjs --verify-room",
     "verify:reopen": "node scripts/start.cjs --verify-reopen",
     "demo:synthetic": "node scripts/cloud-preview.cjs"
   },
