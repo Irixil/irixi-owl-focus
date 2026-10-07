@@ -1,0 +1,322 @@
+{
+  "libraryFileId": "project-source-record",
+  "libraryVersion": 2,
+  "fileId": "project-source-record",
+  "archiveSha256": "faf7c4e7708c6efce949ab5a96c07c82913969eb1abebfca6dd37b8a8e80ba56",
+  "changed": [
+    {
+      "packetFile": "lamps/lamp-cream-drum.png",
+      "engineFile": "lamp-linen.png",
+      "sha256": "cbd97b5f3f999598cd4343547dcbad84b756c4008910612da9e92a6f726cfc9f",
+      "png": {
+        "size": [
+          1024,
+          1536
+        ],
+        "bitDepth": 8,
+        "colorType": 6,
+        "hasAlpha": true
+      },
+      "policy": "await-actual-image-review-and-geometry",
+      "changedFromCurrentSource": true
+    },
+    {
+      "packetFile": "lamps/lamp-sage-arc.png",
+      "engineFile": "lamp-brass.png",
+      "sha256": "67afffc56974a9de8d76c4c80c4b37e8af4531c95549e220d53d5e0509be7cb0",
+      "png": {
+        "size": [
+          1024,
+          1536
+        ],
+        "bitDepth": 8,
+        "colorType": 6,
+        "hasAlpha": true
+      },
+      "policy": "await-actual-image-review-and-geometry",
+      "changedFromCurrentSource": true
+    },
+    {
+      "packetFile": "rugs/rug-diamond.png",
+      "engineFile": "rug-cream.png",
+      "sha256": "db193d21c68ca9c5031917b85a3f8df23e9d9519a7700efc8079a139908880f7",
+      "png": {
+        "size": [
+          1024,
+          1536
+        ],
+        "bitDepth": 8,
+        "colorType": 6,
+        "hasAlpha": true
+      },
+      "policy": "await-actual-image-review-and-geometry",
+      "changedFromCurrentSource": true
+    },
+    {
+      "packetFile": "rugs/rug-sage-oval.png",
+      "engineFile": "rug-pattern.png",
+      "sha256": "6addd8c7970794ea7e5dd289ad1eb424a19e94885882dda8092091ae9ffc5fc3",
+      "png": {
+        "size": [
+          1024,
+          1536
+        ],
+        "bitDepth": 8,
+        "colorType": 6,
+        "hasAlpha": true
+      },
+      "policy": "await-actual-image-review-and-geometry",
+      "changedFromCurrentSource": true
+    },
+    {
+      "packetFile": "plants/plant-a-fiddle-fig.png",
+      "engineFile": "plant-leaf.png",
+      "sha256": "0baf40556e9ac05c60f3dbe829b9bfad7f4c68a898ab5c0e88b8967cedb77ee7",
+      "png": {
+        "size": [
+          1024,
+          1536
+        ],
+        "bitDepth": 8,
+        "colorType": 6,
+        "hasAlpha": true
+      },
+      "policy": "await-actual-image-review-and-geometry",
+      "changedFromCurrentSource": true
+    },
+    {
+      "packetFile": "plants/plant-b-round-leaf.png",
+      "engineFile": "plant-flower.png",
+      "sha256": "a72a3521973dede7760ec52135ab057afabf67a76ecd1a7181f30a9a1e7acde9",
+      "png": {
+        "size": [
+          1024,
+          1536
+        ],
+        "bitDepth": 8,
+        "colorType": 6,
+        "hasAlpha": true
+      },
+      "policy": "await-actual-image-review-and-geometry",
+      "changedFromCurrentSource": true
+    },
+    {
+      "packetFile": "thumbs/lamp-cream-drum.png",
+      "engineFile": "lamp-linen-thumb.png",
+      "sha256": "4967693645e75709be0b0fc319240558657d6c60aa61b446ddc7cc631efd82f8",
+      "png": {
+        "size": [
+          256,
+          256
+        ],
+        "bitDepth": 8,
+        "colorType": 6,
+        "hasAlpha": true
+      },
+      "policy": "await-actual-image-review-and-geometry",
+      "changedFromCurrentSource": true
+    },
+    {
+      "packetFile": "thumbs/lamp-sage-arc.png",
+      "engineFile": "lamp-brass-thumb.png",
+      "sha256": "eff21e5e0053750b9dceb75155e094cb932d3420a28d20840cd348348db4a171",
+      "png": {
+        "size": [
+          256,
+          256
+        ],
+        "bitDepth": 8,
+        "colorType": 6,
+        "hasAlpha": true
+      },
+      "policy": "await-actual-image-review-and-geometry",
+      "changedFromCurrentSource": true
+    },
+    {
+      "packetFile": "thumbs/plant-a-fiddle-fig.png",
+      "engineFile": "plant-leaf-thumb.png",
+      "sha256": "0d3174444422b828d7557072fadc5f433eff19065335fcb5f48dbd7541c82be9",
+      "png": {
+        "size": [
+          256,
+          256
+        ],
+        "bitDepth": 8,
+        "colorType": 6,
+        "hasAlpha": true
+      },
+      "policy": "await-actual-image-review-and-geometry",
+      "changedFromCurrentSource": true
+    },
+    {
+      "packetFile": "thumbs/plant-b-round-leaf.png",
+      "engineFile": "plant-flower-thumb.png",
+      "sha256": "3bf0714b33ac20de9177a951f8ddffda2f2cc158509790510ce44fde6958f2a7",
+      "png": {
+        "size": [
+          256,
+          256
+        ],
+        "bitDepth": 8,
+        "colorType": 6,
+        "hasAlpha": true
+      },
+      "policy": "await-actual-image-review-and-geometry",
+      "changedFromCurrentSource": true
+    },
+    {
+      "packetFile": "thumbs/rug-diamond.png",
+      "engineFile": "rug-cream-thumb.png",
+      "sha256": "aecb1846f82b6a6e5a08232bb3f1c2276026cef3b31f2f640ff2d4d569292178",
+      "png": {
+        "size": [
+          256,
+          256
+        ],
+        "bitDepth": 8,
+        "colorType": 6,
+        "hasAlpha": true
+      },
+      "policy": "await-actual-image-review-and-geometry",
+      "changedFromCurrentSource": true
+    },
+    {
+      "packetFile": "thumbs/rug-sage-oval.png",
+      "engineFile": "rug-pattern-thumb.png",
+      "sha256": "a545dd5b42489d3cb137c73feb79e8295f41961db50f2fe6bbb78eb440963ecd",
+      "png": {
+        "size": [
+          256,
+          256
+        ],
+        "bitDepth": 8,
+        "colorType": 6,
+        "hasAlpha": true
+      },
+      "policy": "await-actual-image-review-and-geometry",
+      "changedFromCurrentSource": true
+    }
+  ],
+  "preserved": [
+    {
+      "packetFile": "backgrounds/cream-paper.png",
+      "engineFile": "room-base.png",
+      "sha256": "dfa6fdc1e2bbf4e1c588b486687ba573b04517fadb379fd874a4465b2f9b4dfd",
+      "png": {
+        "size": [
+          1024,
+          1536
+        ],
+        "bitDepth": 8,
+        "colorType": 2,
+        "hasAlpha": false
+      },
+      "policy": "preserve-original-production-background",
+      "changedFromCurrentSource": false
+    },
+    {
+      "packetFile": "chairs/chair-a-back.png",
+      "engineFile": "chair-lilac-back.png",
+      "sha256": "b89c50898f428397847d51cb4f2981e66537067ab61c75c8b33d0d00fa1568a0",
+      "png": {
+        "size": [
+          1254,
+          1254
+        ],
+        "bitDepth": 8,
+        "colorType": 6,
+        "hasAlpha": true
+      },
+      "policy": "await-actual-image-review-and-geometry",
+      "changedFromCurrentSource": false
+    },
+    {
+      "packetFile": "chairs/chair-a-front.png",
+      "engineFile": "chair-lilac-front.png",
+      "sha256": "dfcdb32bd1ca63119416fe769f08b167195b315d56bed4bc9fc94072be3cc191",
+      "png": {
+        "size": [
+          1254,
+          1254
+        ],
+        "bitDepth": 8,
+        "colorType": 6,
+        "hasAlpha": true
+      },
+      "policy": "await-actual-image-review-and-geometry",
+      "changedFromCurrentSource": false
+    },
+    {
+      "packetFile": "chairs/chair-b-back.png",
+      "engineFile": "chair-sage-back.png",
+      "sha256": "65a0e2d5bbdb7d1ad01ee03871ea5ecd88031856bf59925e7873287e3b99ada4",
+      "png": {
+        "size": [
+          1254,
+          1254
+        ],
+        "bitDepth": 8,
+        "colorType": 6,
+        "hasAlpha": true
+      },
+      "policy": "await-actual-image-review-and-geometry",
+      "changedFromCurrentSource": false
+    },
+    {
+      "packetFile": "chairs/chair-b-front.png",
+      "engineFile": "chair-sage-front.png",
+      "sha256": "0b3f55af5770ee9eae326b7adad77db61016c225430929a4217aa913b617f3b5",
+      "png": {
+        "size": [
+          1254,
+          1254
+        ],
+        "bitDepth": 8,
+        "colorType": 6,
+        "hasAlpha": true
+      },
+      "policy": "await-actual-image-review-and-geometry",
+      "changedFromCurrentSource": false
+    },
+    {
+      "packetFile": "thumbs/chair-a.png",
+      "engineFile": "chair-lilac-thumb.png",
+      "sha256": "c7ba7629bd0cdada421e4db740825e5d42ff11820a7cb7e2430f2df5e66dcdc8",
+      "png": {
+        "size": [
+          256,
+          256
+        ],
+        "bitDepth": 8,
+        "colorType": 6,
+        "hasAlpha": true
+      },
+      "policy": "await-actual-image-review-and-geometry",
+      "changedFromCurrentSource": false
+    },
+    {
+      "packetFile": "thumbs/chair-b.png",
+      "engineFile": "chair-sage-thumb.png",
+      "sha256": "fb8f630d358007a00e786d8f32a5d069fbafc7b29b9a6286b03b0fae6b0b542d",
+      "png": {
+        "size": [
+          256,
+          256
+        ],
+        "bitDepth": 8,
+        "colorType": 6,
+        "hasAlpha": true
+      },
+      "policy": "await-actual-image-review-and-geometry",
+      "changedFromCurrentSource": false
+    }
+  ],
+  "actualReview": {
+    "sixImages": true,
+    "sixThumbs": true,
+    "sixteenCompositionReference": true,
+    "twoParallelStemLinesVisible": true,
+    "originalBackgroundUnchanged": true,
+    "paleWatercolorGouacheDirection": true
+  }
+}

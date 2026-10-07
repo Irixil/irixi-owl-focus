@@ -3,8 +3,10 @@ import { createOwlScene } from './owl-scene.mjs';
 import { bindWidgetDrag } from './widget-drag.mjs';
 import { bindActivityRecords } from './activity-records.mjs';
 import { equipmentOptions } from './equipment-view.mjs';
+import { bindCollectionPanel } from './collection-panel.mjs';
 const $ = id => document.getElementById(id);
-const scene = createOwlScene({canvas:$('owl-canvas'),fallback:$('owl-fallback'),notice:$('motion-note'),interactionElement:$('owl-interaction'),roomElement:document.querySelector('main'),response:$('owl-response'),onAppearance:look=>{$('equipment-summary').textContent=look.summary;}});
+let collectionPanel;
+const scene = createOwlScene({canvas:$('owl-canvas'),fallback:$('owl-fallback'),notice:$('motion-note'),interactionElement:$('owl-interaction'),roomElement:document.querySelector('main'),response:$('owl-response'),onAppearance:look=>{$('equipment-summary').textContent=look.summary;collectionPanel?.setPreviewReady(look.canConfirmPreview);}});
 const compact = new URLSearchParams(location.search).get('mode') === 'compact';
 if (compact) document.body.classList.add('compact');
 const widget = new URLSearchParams(location.search).get('mode') === 'widget';
@@ -25,6 +27,7 @@ $('widget-size').addEventListener('click',()=>window.owlFocus.resizeWidget().cat
 const disposeWidgetDrag=widget?bindWidgetDrag(window.owlFocus):()=>{};
 const disposeActivityRecords=bindActivityRecords(window.owlFocus);
 let current, busy = false, unsubscribe, lastConfiguredSeconds;
+collectionPanel=bindCollectionPanel({root:document,details:$('more'),onPreview:(equipment,positions,layerOrder)=>scene.setPreviewEquipment(equipment,positions,layerOrder),onSave:extra=>act('room-set',extra),onOpenChange:open=>{document.querySelector('main').classList.toggle('dressing',open);scene.setInteractionPaused(open);}});
 const fmt = ms => { const s = Math.ceil(ms / 1000); return String(Math.floor(s / 60)).padStart(2,'0') + ':' + String(s % 60).padStart(2,'0'); };
 function primaryType(s) {
   if (s.active) return s.active.status === 'running' ? 'pause' : 'resume';
@@ -33,12 +36,20 @@ function primaryType(s) {
 function render(state) {
   if (current && state.revision < current.revision) return;
   current = state;
+  $('development-art-note').hidden=!state.collectionCatalog?.room?.developmentPreview;
   if(state.configuredFocusSeconds&&state.configuredFocusSeconds!==lastConfiguredSeconds){lastConfiguredSeconds=state.configuredFocusSeconds;$('minutes').value=String(lastConfiguredSeconds/60);}
   scene.update(state);
+  collectionPanel.update(state,busy);
+  $('test-access').checked=Boolean(state.testAccess?.enabled);$('test-access').disabled=busy||Boolean(state.fault);
+  $('test-access-note').textContent=state.testAccess?.enabled?'全部现有道具可直接体验；关闭后恢复正常装扮。':'不增加专注时长或永久收藏；关闭后恢复正常装扮。';
+  $('collection-open').textContent=state.testAccess?.enabled?'打开收藏箱 · 全部可体验':'打开收藏箱';
+  $('wardrobe-toggle').title=state.testAccess?.enabled?'收藏与装扮 · 全道具体验':'收藏与装扮';
   const a = state.active, running = a?.status === 'running';
   const type = primaryType(state);
   $('status').textContent = a ? (a.kind === 'focus' ? '专注' : '休息') + (running ? '进行中' : '已暂停') : (state.lastOutcome?.outcome === 'completed' ? '本轮已完成' : '准备开始');
-  $('remaining').textContent = fmt(a ? a.durationMs-a.elapsedMs : Number($(type==='break'?'break-minutes':'minutes').value || (type==='break'?5:25))*60000);
+  if(state.testAccess?.enabled)$('status').textContent+=' · 全道具体验';
+  const time=fmt(a ? a.durationMs-a.elapsedMs : Number($(type==='break'?'break-minutes':'minutes').value || (type==='break'?5:25))*60000);
+  if($('remaining').textContent!==time||$('remaining').children.length!==time.length){$('remaining').replaceChildren(...[...time].map(char=>{const span=document.createElement('span');span.className=char===':'?'timer-colon':'timer-digit';span.textContent=char;return span;}));}
   $('active-task').textContent = a?.task || (type==='break' ? '休息一下，准备好后再开始下一轮' : '这次想做哪一件事？');
   $('task-setup').hidden = Boolean(a) || type==='break';
   $('primary-action').textContent = {start:'开始专注',pause:'暂停',resume:'确认并继续',break:'开始休息'}[type];
@@ -65,6 +76,7 @@ async function act(type, extra={}) {
     const result=await window.owlFocus.command({type,requestId:crypto.randomUUID(),sessionId:current.active?.id,...extra});
     if(result.state) render(result.state);
     if(!result.ok) $('error').textContent=result.error;
+    return result;
   } catch(e) { $('error').textContent='操作未确认：'+e.message; }
   finally {busy=false;if(current)render(current);}
 }
@@ -87,9 +99,10 @@ $('end').addEventListener('click',()=>act('end'));
 $('break').addEventListener('click',()=>act('break',{minutes:Number($('break-minutes').value)}));
 for(const slot of ['accessory','room']) $(slot).addEventListener('change',event=>act('equip',{slot,item:event.target.value || null}));
 $('reduced-motion').addEventListener('change',event=>act('preferences',{reducedMotion:event.target.checked}));
+$('test-access').addEventListener('change',event=>act('test-access',{enabled:event.target.checked}));
 for(const id of ['minutes','break-minutes']) $(id).addEventListener('input',()=>{if(current && !current.active)render(current);});
 $('other-view').addEventListener('click',()=>window.owlFocus.openOtherView());
 $('close-panel').addEventListener('click',()=>{$('more').open=false;});
 if(!window.owlFocus) $('error').textContent='请通过本地工程入口打开。';
 else { unsubscribe=window.owlFocus.subscribe(render);Promise.resolve(window.owlFocus.defaults?.()).then(defaults=>{if(defaults?.seconds)$('minutes').value=String(defaults.seconds/60);return window.owlFocus.snapshot();}).then(render).catch(e=>{$('error').textContent='读取存档失败：'+e.message;}); }
-window.addEventListener('beforeunload',()=>{disposeActivityRecords();disposeWidgetDrag();unsubscribe?.();scene.dispose();});
+window.addEventListener('beforeunload',()=>{collectionPanel.dispose();disposeActivityRecords();disposeWidgetDrag();unsubscribe?.();scene.dispose();});

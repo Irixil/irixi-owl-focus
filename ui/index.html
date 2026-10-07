@@ -10,7 +10,7 @@
 </head>
 <body>
   <main>
-    <header><button id="toolbox-back" class="text-button" hidden>返回工具箱</button><button id="toolbox-collapse" class="text-button" hidden>收起</button><button id="widget-size" class="icon-button" aria-label="切换番茄钟组件尺寸" title="切换组件尺寸" hidden><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M7 3H3v4m10-4h4v4M3 13v4h4m10-4v4h-4"/></svg></button><button id="other-view" class="text-button">打开工具箱</button></header>
+    <header><button id="toolbox-back" class="text-button" hidden>返回工具箱</button><button id="toolbox-collapse" class="text-button" hidden>收起</button><button id="wardrobe-toggle" class="icon-button" aria-label="打开收藏箱，在房间试摆" aria-expanded="false" title="收藏与装扮"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 9 9-5 9 5v12H3V9Zm0 0 9 5 9-5M12 14v7m-4-4h1m6 0h1"/></svg></button><button id="widget-size" class="icon-button" aria-label="切换番茄钟组件尺寸" title="切换组件尺寸" hidden><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M7 3H3v4m10-4h4v4M3 13v4h4m10-4v4h-4"/></svg></button><button id="other-view" class="text-button">打开工具箱</button></header>
     <section class="timer" aria-label="专注计时">
       <output id="remaining">25:00</output>
       <span id="status">准备开始</span>
@@ -22,6 +22,9 @@
         <canvas id="owl-canvas" width="900" height="1000" role="img" aria-label="红围巾猫头鹰坐在凳子上，捧着茶杯陪伴你" hidden></canvas>
         <img id="owl-fallback" src="assets/concept-v4.png" alt="红围巾猫头鹰坐在凳子上，捧着杯子" />
       </div>
+      <div id="placement-highlight" hidden aria-hidden="true"></div>
+      <div id="placement-controls" hidden aria-label="布置选中物件"><div class="placement-directions"><button type="button" data-move="left" aria-label="向左移动">←</button><button type="button" data-move="up" aria-label="向上移动">↑</button><button type="button" data-move="down" aria-label="向下移动">↓</button><button type="button" data-move="right" aria-label="向右移动">→</button><button type="button" data-layer="forward" title="往前一层" aria-label="往前一层">前</button><button type="button" data-layer="backward" title="往后一层" aria-label="往后一层">后</button></div><div class="placement-sizing" aria-label="道具大小，50%至200%"><button type="button" data-size="smaller" title="缩小10%" aria-label="缩小道具">−</button><button type="button" data-size="reset" title="恢复原大小，保留位置" aria-label="恢复原大小">100%</button><button type="button" data-size="larger" title="放大10%" aria-label="放大道具">+</button></div></div>
+      <small id="development-art-note" hidden>开发占位 · 非最终美术</small>
       <span id="owl-response" class="sr-only" role="status" aria-live="polite"></span>
     </section>
     <section class="actions">
@@ -35,13 +38,25 @@
       <summary aria-label="更多：任务、设置、装扮与记录"><svg class="more-glyph" viewBox="0 0 20 20" aria-hidden="true"><path d="M4 10h.1M10 10h.1M16 10h.1"/></svg><svg class="back-glyph" viewBox="0 0 20 20" aria-hidden="true"><path d="m12 5-5 5 5 5"/></svg><span class="panel-label">返回房间</span></summary>
       <div class="secondary">
         <button id="close-panel" class="text-button">回到房间</button>
-        <section><h2>装扮</h2><small id="equipment-summary">初始凳子</small><label>配饰<select id="accessory"><option value="red-scarf">不戴眼镜</option><option value="round-glasses" disabled>圆眼镜 · 累计5分钟解锁</option></select></label><label>座位<select id="room"><option value="stool">初始凳子</option><option value="reading-chair" disabled>阅读椅 · 累计10分钟解锁</option></select></label><p id="growth">0 枚成长印记</p><p id="total"></p><small class="rule">每满一分钟一枚印记。当前5分钟眼镜、10分钟木椅；暂停、休息、离线不计入。</small></section>
+        <section id="collection-section"><h2>收藏与装扮</h2><small id="equipment-summary">初始凳子</small>
+        <label class="check"><input id="test-access" type="checkbox" />全道具体验（测试）</label><small id="test-access-note">不增加专注时长或永久收藏；关闭后恢复正常装扮。</small>
+        <button id="collection-open" type="button">打开收藏箱</button>
+        <div hidden aria-hidden="true"><select id="accessory"><option value="red-scarf">不戴眼镜</option><option value="round-glasses" disabled>圆眼镜</option></select><select id="room"><option value="stool">初始凳子</option><option value="reading-chair" disabled>阅读椅</option></select></div>
+        <p id="growth">0 枚成长印记</p><p id="total"></p><small class="rule">累计有效专注带来永久收藏；暂停、休息、离线不计入。初始门槛可调整；旧眼镜 5 分钟、阅读椅 10 分钟解锁。</small></section>
         <section><h2>设置</h2><div id="widget-task-slot"></div><button id="widget-start" hidden>开始专注</button><div class="durations"><label>专注（分钟）<input id="minutes" type="number" min="1" max="180" value="25" /></label><label>休息（分钟）<input id="break-minutes" type="number" min="1" max="60" value="5" /></label></div><button id="start" hidden>跳过休息，开始下一轮</button><button id="break" hidden>开始休息</button><small id="recovery-info"></small></section>
         <section><h2>记录</h2><div id="app-records"><p class="rule">仅在这台 Mac 保存前台 APP 和时长。活动类别由你确认；没有操作也可能在学习。停止后不再查询或累计，重开需要再次开启。</p><button id="activity-toggle" type="button">开始记录前台 APP</button><p id="activity-status" class="rule" role="status">默认关闭，尚未采集。</p><p id="activity-error" role="alert"></p><h3>按 APP 查看</h3><ol id="activity-apps" class="activity-list"></ol><h3>时间段与活动类别</h3><ol id="activity-segments" class="activity-list"></ol><small>约每2秒查看一次前台 APP，切换边界会有采样误差；APP 时间不代表工作成果。此功能不读取窗口标题、网页或聊天内容，也不判断空闲或扣减奖励。</small></div></section>
         <section><h2>动作偏好</h2><label class="check"><input id="reduced-motion" type="checkbox" />减少动效</label><small id="motion-note">正在读取猫头鹰素材…</small></section>
         <small id="saved"></small>
       </div>
     </details>
+    <aside id="collection-panel" aria-label="收藏箱与房间试摆" hidden>
+      <div class="collection-heading"><strong id="collection-mode">我的收藏</strong><button id="placement-mode" type="button" aria-pressed="false" aria-label="切换布置模式，拖动房间物件">布置</button><button id="collection-back" class="icon-button" type="button" aria-label="取消整组试摆，回到房间" title="取消试摆"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m5 5 10 10M15 5 5 15"/></svg></button></div>
+      <nav id="collection-tabs" aria-label="图形收藏分类"></nav>
+      <div id="collection-cards" aria-label="实物道具"></div>
+      <div id="collection-preview" hidden><span id="collection-preview-name" class="sr-only"></span><p id="collection-message" role="status" aria-live="polite"></p></div>
+      <div class="collection-preview-actions"><button id="collection-cancel" type="button">取消</button><button id="collection-defaults" type="button" aria-label="试摆整组默认位置，放好才保存">默认</button><button id="collection-confirm" type="button">放好</button></div><small id="collection-retained"></small>
+    </aside>
+    <aside id="collection-reward" aria-label="新获得的收藏" hidden><canvas id="collection-reward-canvas" width="256" height="256" aria-hidden="true"></canvas><div><small id="collection-reward-note">有效专注带来的新收藏</small><strong id="collection-reward-name"></strong></div><div class="reward-actions"><button id="collection-reward-dismiss" type="button">知道了</button><button id="collection-reward-place" type="button">去试摆</button></div></aside>
   </main>
 </body>
 </html>

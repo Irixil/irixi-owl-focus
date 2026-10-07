@@ -33,7 +33,7 @@ test('reward→equip→pause/resume→chair→reopen feeds scene choices through
   assert.equal(f.send('equip',{slot:'room',item:'reading-chair'}).ok,true);f.send('end');
   const saved=f.store.read();validateState(saved);assert.equal(saved.creditedMinutes,10);assert.equal('records' in saved,false);assert.equal(saved.settledFocusMs,600000);
   const reopened=fixture(saved),s=reopened.controller.snapshot(reopened.event(reopened.b));
-  assert.deepEqual(s.equipment,{accessory:'round-glasses',room:'reading-chair'});assert.equal(s.creditedMinutes,10);
+  assert.deepEqual(s.equipment,{...require('../src/collection.cjs').DEFAULTS,accessory:'round-glasses',room:'reading-chair',chair:'reading-chair'});assert.equal(s.creditedMinutes,10);
   const pending=resolveAppearance(s);assert.match(pending.summary,/画面暂未更新/);
   const images={chairBack:{},chairFront:{},glassesFront:{},glassesUp:{},glassesLeft30:{},glassesLeft60:{},glassesRight30:{},glassesRight60:{}};
   const ready=resolveAppearance(s,images);assert.equal(ready.accessory,'round-glasses');assert.equal(ready.room,'reading-chair');assert.equal(ready.missing.length,0);

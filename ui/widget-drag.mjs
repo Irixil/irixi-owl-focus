@@ -6,7 +6,7 @@ export function bindWidgetDrag(bridge){
  const clear=()=>{clearTimeout(timer);cancelAnimationFrame(frame);const old=gesture;gesture=null;document.body.removeAttribute('data-dragging');if(old&&document.body.hasPointerCapture?.(old.id))document.body.releasePointerCapture(old.id);};
  const cancel=()=>{const old=gesture;clear();if(old?.started){blockClicksUntil=Date.now()+260;send({type:'cancel',pointerId:old.id});}};
  const down=e=>{
-  if(e.button!==0||e.isPrimary===false||e.target.closest('button,input,textarea,select,a,audio,[contenteditable],summary,details[open]'))return;
+  if(document.querySelector('main.arranging')||e.button!==0||e.isPrimary===false||e.target.closest('button,input,textarea,select,a,audio,[contenteditable],summary,details[open]'))return;
   if(gesture)cancel();const g={id:e.pointerId,x:e.screenX,y:e.screenY,last:e,started:false};gesture=g;
   timer=setTimeout(async()=>{if(gesture!==g)return;g.started=true;try{document.body.setAttribute('data-dragging','');document.body.setPointerCapture?.(g.id);const ok=await bridge.drag({type:'begin',pointerId:g.id,screenX:g.x,screenY:g.y});if(!ok&&gesture===g)clear();}catch{if(gesture===g)clear();}},420);
  };

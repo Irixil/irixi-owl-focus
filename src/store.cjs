@@ -39,7 +39,7 @@ class FileStore {
       if (!isUtf8(bytes)) throw new Error('存档包含损坏的 UTF-8 字节，停止读取以保护原文件。');
       const raw = JSON.parse(bytes.toString('utf8'));
       const state = migrateState(raw);
-      if (raw.schema === 1 || raw.schema === 2) {
+      if (raw.schema !== state.schema) {
         const hash = createHash('sha256').update(bytes).digest('hex');
         const backup = path.join(this.dir, `focus-state.schema${raw.schema}-${hash}.json`);
         if (fs.existsSync(backup)) {
@@ -63,6 +63,17 @@ class FileStore {
   }
   write(state) {
     validateState(state);
+    // Archive actual bytes before first testing access; earned state stays separate.
+    if(state.testAccess?.enabled&&!this.testAccessBackedUp){
+      let bytes;try{bytes=fs.readFileSync(this.file);}catch(e){if(e.code!=='ENOENT')throw e;}
+      if(bytes&&!JSON.parse(bytes.toString('utf8')).testAccess?.enabled){
+        const digest=createHash('sha256').update(bytes).digest('hex'),backup=path.join(this.dir,`focus-state.before-test-access-${digest}.json`);
+        if(fs.existsSync(backup)){if(!fs.readFileSync(backup).equals(bytes))throw Error('体验前备份内容不一致；原存档未覆盖。');}
+        else{const fd=fs.openSync(backup,'wx',0o600);try{fs.writeFileSync(fd,bytes);fs.fsyncSync(fd);}finally{fs.closeSync(fd);}}
+        const dir=fs.openSync(this.dir,'r');try{fs.fsyncSync(dir);}finally{fs.closeSync(dir);}
+      }
+      this.testAccessBackedUp=true;
+    }
     const temporary = this.file + '.tmp';
     let fd, replaced = false;
     try {

@@ -12,7 +12,7 @@ const { initialState, command, advance } = require('../src/core.cjs');
 
 test('unexpected legacy backup content blocks migration without replacing original progress',()=>{
   const dir=fs.mkdtempSync(path.join(os.tmpdir(),'owl-backup-conflict-')),s=initialState();
-  s.schema=1;s.records=[];delete s.settledFocusMs;delete s.preferences;s.equipment.room=null;
+  s.schema=1;delete s.positions;delete s.collection;s.equipment={accessory:s.equipment.accessory,room:s.equipment.room};s.records=[];delete s.settledFocusMs;delete s.preferences;s.equipment.room=null;
   const bytes=JSON.stringify(s),hash=require('node:crypto').createHash('sha256').update(bytes).digest('hex');
   const file=path.join(dir,'focus-state.json');fs.writeFileSync(file,bytes);
   fs.writeFileSync(path.join(dir,`focus-state.schema1-${hash}.json`),'unexpected backup bytes');
@@ -25,11 +25,11 @@ test('schema1 engineering progress migrates plant to chair with byte-identical b
   const dir=fs.mkdtempSync(path.join(os.tmpdir(),'owl-migrate-')), file=path.join(dir,'focus-state.json');
   const s=initialState(); command(s,{type:'start',task:'migration fixture',minutes:10,requestId:'a'},1000,()=> 'fixture');
   advance(s,600000,601000); command(s,{type:'equip',slot:'room',item:'reading-chair',requestId:'b'},601000);
-  s.schema=1;s.records=[{id:'fixture',task:'migration fixture',startedAt:1000,endedAt:601000,durationMs:600000,focusMs:600000,outcome:'completed',marksEarned:10}];delete s.settledFocusMs;delete s.preferences;s.unlocked=s.unlocked.map(id=>id==='reading-chair'?'desk-plant':id);s.equipment.room='desk-plant';
+  s.schema=1;delete s.positions;delete s.collection;s.equipment={accessory:s.equipment.accessory,room:s.equipment.room};s.records=[{id:'fixture',task:'migration fixture',startedAt:1000,endedAt:601000,durationMs:600000,focusMs:600000,outcome:'completed',marksEarned:10}];delete s.settledFocusMs;delete s.preferences;s.unlocked=s.unlocked.map(id=>id==='reading-chair'?'desk-plant':id);s.equipment.room='desk-plant';
   const bytes=JSON.stringify(s,null,2);fs.writeFileSync(file,bytes);
   const store=new FileStore(dir);
   try {
-    const migrated=store.read();assert.equal(migrated.schema,3);assert.equal(migrated.equipment.room,'reading-chair');
+    const migrated=store.read();assert.equal(migrated.schema,8);assert.equal(migrated.equipment.room,'reading-chair');
     assert.equal(migrated.totalFocusMs,600000);assert.equal('records' in migrated,false);assert.equal(migrated.settledFocusMs,600000);
     const backup=fs.readdirSync(dir).find(name=>name.startsWith('focus-state.schema1-'));
     assert.equal(fs.readFileSync(path.join(dir,backup),'utf8'),bytes);

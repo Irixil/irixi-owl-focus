@@ -1,0 +1,57 @@
+'use strict';
+const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),{randomUUID}=require('node:crypto');
+const wait=ms=>new Promise(r=>setTimeout(r,ms));
+exports.run=async({app,views,service,activity,root,data,openView,phase})=>{
+ const out=path.join(root,'.runtime/collection30/ui');fs.mkdirSync(out,{recursive:true});const rows=[];let failure;
+ const js=(w,s)=>w.webContents.executeJavaScript(s,true).catch(e=>{throw Error(e.message+' | expression: '+s)});
+ const until=async(fn,label)=>{const end=Date.now()+12000;while(Date.now()<end){if(await fn())return;await wait(50);}throw Error(label+' timeout');};
+ const click=async(w,selector)=>{const p=await js(w,`(()=>{const e=document.querySelector(${JSON.stringify(selector)});if(!e||e.disabled||e.closest('[hidden]'))throw Error('not clickable '+${JSON.stringify(selector)});e.scrollIntoView({block:'center'});const r=e.getBoundingClientRect(),x=r.x+r.width/2,y=r.y+r.height/2;if(!e.contains(document.elementFromPoint(x,y)))throw Error('covered '+${JSON.stringify(selector)});return{x,y}})()`);for(const type of ['mouseMove','mouseDown','mouseUp'])w.webContents.sendInputEvent({type,x:Math.round(p.x),y:Math.round(p.y),button:'left',clickCount:1});await wait(120);};
+ const ready=w=>until(()=>js(w,"!document.querySelector('#owl-canvas').hidden&&document.querySelector('#owl-canvas').dataset.roomMode==='portrait'"),'room renderer');
+ const point=(w,x,y)=>js(w,`(()=>{const c=document.querySelector('#owl-canvas'),r=c.getBoundingClientRect(),crop=JSON.parse(c.dataset.sourceCrop),d=JSON.parse(c.dataset.roleDisplay),scale=Math.min(r.width/c.width,r.height/c.height);return{x:r.x+(r.width-c.width*scale)/2+(d.offset[0]+${x}*d.scale-crop.x)*scale,y:r.y+(r.height-c.height*scale)/2+(d.offset[1]+${y}*d.scale-crop.y)*scale}})()`);
+ const input=(w,type,p)=>w.webContents.sendInputEvent({type,x:Math.round(p.x),y:Math.round(p.y),button:'left',clickCount:1});
+ const capture=async(w,name)=>{const image=await w.webContents.capturePage();assert.ok(!image.isEmpty());fs.writeFileSync(path.join(out,name+'.png'),image.toPNG());};
+ try{
+  if(phase==='collection-reopen'){
+   const record=JSON.parse(fs.readFileSync(path.join(out,'before-process-reopen.json')));assert.equal(record.dataDir,data,'Restart must compare the current verification profile, never a stale sample');const expected=record.state,state=service.snapshot();assert.deepEqual(state.collection.owned,expected.collection.owned);assert.deepEqual(state.equipment,expected.equipment);assert.equal(state.totalFocusMs,expected.totalFocusMs);assert.equal(state.active.id,expected.active.id);assert.equal(state.active.status,'paused');await ready(views.get('standalone'));assert.equal(activity.snapshot().enabled,false);rows.push({claim:'Actual isolated Electron process reopened, exact durable permanent owned/equipment/time retained, active paused, no offline credit or duplicate awards'});
+  }else{
+  const w=views.get('standalone');await ready(w);const origClock=service.clock;let time=origClock();service.clock=()=>time;service.last=time;
+  service.dispatch({type:'start',task:'Synthetic graphical collection acceptance',minutes:180,requestId:randomUUID()});const before=service.snapshot();
+  const face=await point(w,453,293),hover=await point(w,545,293),count=await js(w,"Number(document.querySelector('#owl-interaction').dataset.responses||0)");input(w,'mouseMove',hover);await wait(500);assert.ok((await js(w,"JSON.parse(document.querySelector('#owl-canvas').dataset.attention).yaw"))>1);input(w,'mouseMove',face);input(w,'mouseDown',face);await wait(50);input(w,'mouseUp',face);await wait(180);assert.equal(await js(w,"Number(document.querySelector('#owl-interaction').dataset.responses||0)"),count+1);assert.deepEqual(service.snapshot(),before);input(w,'mouseMove',{x:5,y:5});await wait(160);
+  rows.push({claim:'Scaled original head native hover/pat uses inverse world transform, no timer mutation, glasses remain in same original rig'});
+  await click(w,'#more > summary');await click(w,'#collection-open');await click(w,'[data-category="chair"]');await click(w,'[data-item="reading-chair"]');assert.equal(await js(w,"document.querySelector('#collection-confirm').disabled"),true);assert.deepEqual(service.snapshot().equipment,before.equipment);assert.deepEqual(service.snapshot().collection,before.collection);await click(w,'#collection-cancel');assert.deepEqual(service.snapshot().equipment,before.equipment);
+  rows.push({claim:'Locked real chair graphical preview and cancel cause zero save/ownership/timer mutations'});
+  for(let n=0;n<360;n++){time={mono:time.mono+15000,wall:time.wall+15000};service.tick();}
+  assert.equal(service.snapshot().collection.owned.length,10);
+  for(const category of ['lamp','rug','chair','plant','accessory']){
+   const items=service.snapshot().collectionCatalog.items.filter(i=>i.category===category&&!i.starter);
+   for(const item of items){await click(w,'#wardrobe-toggle');await click(w,`[data-category="${category}"]`);await click(w,`[data-item="${item.id}"]`);const saved=service.snapshot();assert.equal(await js(w,"document.querySelector('#collection-preview').hidden"),false);assert.deepEqual(service.snapshot().equipment,saved.equipment);await until(()=>js(w,"!document.querySelector('#collection-confirm').disabled"),'whole outfit ready');await click(w,'#collection-confirm');await until(()=>service.snapshot().equipment[category]===item.id,'confirmed item '+item.id);assert.equal(service.snapshot().active.id,before.active.id);assert.equal(service.snapshot().active.status,'running');assert.equal(service.snapshot().active.durationMs,before.active.durationMs);}
+  }
+  await click(w,'#wardrobe-toggle');await click(w,'[data-category="accessory"]');assert.equal(await js(w,"document.querySelectorAll('.collection-art canvas:not([hidden])').length"),1);await capture(w,'graphical-accessory');await click(w,'#collection-cancel');
+  rows.push({claim:'Five graphical categories, actual item canvases, eight furniture variants + legacy chair/glasses preview/confirm using same running session',equipment:service.snapshot().equipment,owned:service.snapshot().collection.owned});
+  // Actual original role and separate PNG layers; no whole-room screenshot slicing.
+  const combos=await js(w,`(async()=>{
+   const {createOutfitRenderer}=await import('./outfit-renderer.mjs'),{loadOutfitAssets}=await import('./outfit-assets.mjs'),{loadRoomAssets,composeRoom}=await import('./room-assets.mjs');
+   const load=src=>new Promise((resolve,reject)=>{const i=new Image();i.onload=()=>resolve(i);i.onerror=reject;i.src=src;});const state=await window.owlFocus.snapshot();const [bodyAtlas,headAtlas,pitchHead]=await Promise.all(['body-parts.png','head-poses.png','head-up-sip.png'].map(n=>load('./assets/motion-v7/'+n)));const outfit=await loadOutfitAssets(load),pack=await loadRoomAssets(state.collectionCatalog);const source=document.createElement('canvas');source.width=900;source.height=1000;const images={...outfit.images,roomItems:pack.items},renderer=createOutfitRenderer(source,{bodyAtlas,headAtlas,pitchHead},images,{transparentBackground:true,showLabels:false,showGround:false,separateSeat:()=>true}),world=document.createElement('canvas');world.width=1024;world.height=1536;const ctx=world.getContext('2d'),results=[],sheet=document.createElement('canvas');sheet.width=2048;sheet.height=3072;const q=sheet.getContext('2d');
+   for(const lamp of ['lamp-linen','lamp-brass'])for(const rug of ['rug-cream','rug-pattern'])for(const room of ['chair-lilac','chair-sage'])for(const plant of ['plant-leaf','plant-flower']){const equipment={lamp,rug,chair:room,room,plant,accessory:'round-glasses'};renderer.renderAt(0,{focus:true,appearance:equipment});composeRoom(ctx,pack.base,pack.items,equipment,source,{legacyImages:images,bodyAtlas,roleDisplay:state.collectionCatalog.room.roleDisplay});q.drawImage(world,(results.length%4)*512,Math.floor(results.length/4)*768,512,768);results.push({name:[lamp,rug,room,plant].join('_'),png:world.toDataURL('image/png').split(',')[1]});}results.push({name:'all16-contact-sheet',png:sheet.toDataURL('image/png').split(',')[1]});return results;})()`);
+  for(const c of combos)fs.writeFileSync(path.join(out,c.name+'.png'),Buffer.from(c.png,'base64'));assert.equal(combos.length,17);rows.push({claim:'16 actual original-role composited furniture combinations exported locally; visual review separate',count:16});
+  const widget=openView('widget');await ready(widget);
+  for(const [name,width,height] of [['mini',186,124],['small',186,262],['medium',387,262],['large',387,538]]){
+   widget.setContentSize(width,height);await wait(300);await capture(widget,'widget-'+name);const head=await point(widget,453,293),n=await js(widget,"Number(document.querySelector('#owl-interaction').dataset.responses||0)");input(widget,'mouseMove',head);input(widget,'mouseDown',head);await wait(40);input(widget,'mouseUp',head);await wait(180);assert.equal(await js(widget,"Number(document.querySelector('#owl-interaction').dataset.responses||0)"),n+1);await click(widget,'#wardrobe-toggle');await click(widget,'[data-category="chair"]');await click(widget,'[data-item="stool"]');await until(()=>js(widget,"!document.querySelector('#collection-confirm').disabled"),'stool whole outfit ready');await click(widget,'#collection-confirm');await until(()=>service.snapshot().equipment.chair==='stool','stool restored');await click(widget,'#wardrobe-toggle');await click(widget,'[data-category="chair"]');await click(widget,'[data-item="chair-lilac"]');await until(()=>js(widget,"!document.querySelector('#collection-confirm').disabled"),'chair whole outfit ready');await click(widget,'#collection-confirm');await until(()=>service.snapshot().equipment.chair==='chair-lilac','new chair');rows.push({claim:'Original size graphical panel reachable and scaled original head native input hit maps correctly',name,width,height});
+  }
+  const saved=service.snapshot();assert.equal(saved.active.id,before.active.id);assert.equal(saved.totalFocusMs,5400000);assert.equal(activity.snapshot().enabled,false);service.clock=origClock;service.last=origClock();
+  // main.cjs closes the service in before-quit. Capture its final durable
+  // state in will-quit, including the final real-clock settlement. Never
+  // reuse a previous profile's sample or weaken the exact restart check.
+  app.once('will-quit',()=>{
+   try{
+    const current=service.snapshot();assert.equal(current.fault,null);
+    const durable=JSON.parse(fs.readFileSync(path.join(data,'focus/focus-state.json'),'utf8'));
+    for(const key of Object.keys(durable))assert.deepEqual(current[key],durable[key],'Shutdown memory/file mismatch: '+key);
+    assert.equal(durable.active.id,before.active.id);assert.equal(durable.active.status,'paused');
+    fs.writeFileSync(path.join(out,'before-process-reopen.json'),JSON.stringify({dataDir:data,state:durable},null,2));
+   }catch(error){console.error('Restart baseline was not captured after successful shutdown:',error.stack);app.exit(1);}
+  });
+  }
+ }catch(e){failure=e;console.error(e.stack);rows.push({error:e.stack});}
+ fs.writeFileSync(path.join(out,phase==='collection-reopen'?'reopen-result.json':'result.json'),JSON.stringify({result:failure?'failed':'passed',surface:'Offscreen isolated Electron actual PNG canvas + native input; controlled virtual elapsed; no physical OS mouse or true embedded acceptance',data,productionUpdated:false,rows},null,2));if(failure)app.exit(1);else app.quit();
+};

@@ -2,22 +2,24 @@
 
 // Product rules only: no renderer clock, IO, network or user-activity inference.
 const MINUTE = 60_000;
-const CATALOG = Object.freeze([
-  { id: 'round-glasses', name: '圆眼镜', slot: 'accessory', minutes: 5 },
-  // Reversible engineering threshold, not an owner-approved fixed economy.
-  { id: 'reading-chair', name: '阅读椅', slot: 'room', minutes: 10 },
-]);
+const { CATALOG: COLLECTION_CATALOG, SLOTS, LEGACY_SLOTS, BASE_SLOTS, DEFAULTS, ID, awardOwned, equip, equipSet } = require('./collection.cjs');
+// Historical schemas could only earn these two IDs. New configurable items
+// must never make an otherwise valid old save appear corrupt.
+const {validatePositions}=require('./room-layout.cjs');
+const {saveRoomSet,validateArrangement}=require('../ui/placement-rules.cjs');
+const {DEFAULT_ORDER,validateOrder}=require('../ui/layer-order.cjs');
+const CATALOG=Object.freeze([{id:'round-glasses',name:'圆眼镜',slot:'accessory',minutes:5},{id:'reading-chair',name:'阅读椅',slot:'room',minutes:10}]);
 
 function initialState() {
-  return { schema: 3, revision: 0, totalFocusMs: 0, creditedMinutes: 0,
-    unlocked: [], equipment: { accessory: 'red-scarf', room: 'stool' },
+  return { schema: 8, positions:{}, layerOrder:[...DEFAULT_ORDER], revision: 0, totalFocusMs: 0, creditedMinutes: 0,
+    unlocked: [], collection: {owned:[],catalogVersion:COLLECTION_CATALOG.version}, equipment: {...DEFAULTS,room:'stool'},
     active: null, settledFocusMs: 0, processed: [], lastOutcome: null, lastSavedAt: null,
     preferences: { reducedMotion: false } };
 }
 
 function validateState(s, allowLegacy = false) {
   const int = n => Number.isSafeInteger(n) && n >= 0;
-  if (!s || !(s.schema === 3 || (allowLegacy && s.schema === 2)) || !int(s.revision) || !int(s.totalFocusMs)
+  if (!s || !(s.schema === 8 || (allowLegacy && [2,3,4,5,6,7].includes(s.schema))) || !int(s.revision) || !int(s.totalFocusMs)
     || !int(s.creditedMinutes) || s.creditedMinutes !== Math.floor(s.totalFocusMs / MINUTE)
     || (s.schema === 2 ? !Array.isArray(s.records) : (!int(s.settledFocusMs) || Object.hasOwn(s,'records')))
     || !Array.isArray(s.processed) || s.processed.length > 128
@@ -28,16 +30,29 @@ function validateState(s, allowLegacy = false) {
     || !s.preferences || typeof s.preferences.reducedMotion !== 'boolean') {
     throw new Error('保存格式不正确；原文件已保留，不能用空白进度覆盖。');
   }
-  const expected = CATALOG.filter(item => s.creditedMinutes >= item.minutes).map(item => item.id);
-  if (s.unlocked.length !== expected.length || !expected.every(id => s.unlocked.includes(id)))
-    throw new Error('成长与解锁记录不一致；停止写入以保护存档。');
-  if (![null, 'red-scarf', 'round-glasses'].includes(s.equipment.accessory)
-    || !['stool', 'reading-chair'].includes(s.equipment.room)
-    || (s.equipment.accessory === 'round-glasses' && !s.unlocked.includes('round-glasses'))
-    || (s.equipment.room === 'reading-chair' && !s.unlocked.includes('reading-chair')))
-    throw new Error('装扮记录不正确；停止写入以保护存档。');
+  if([4,5,6,7,8].includes(s.schema)){
+    const c=s.collection;if(!c||!Array.isArray(c.owned)||new Set(c.owned).size!==c.owned.length||!c.owned.every(id=>typeof id==='string'&&ID.test(id))||typeof c.catalogVersion!=='string'||!c.catalogVersion||c.owned.length!==s.unlocked.length||!c.owned.every(id=>s.unlocked.includes(id)))throw Error('永久收藏记录不一致；原文件已保留。');
+    if(s.equipment.room!==s.equipment.chair)throw Error('座位兼容记录不一致。');
+    const slots=s.schema===4?LEGACY_SLOTS:s.schema>=7?SLOTS:BASE_SLOTS;
+    for(const slot of slots){const id=s.equipment[slot];if(!(id===DEFAULTS[slot]||slot==='accessory'&&id===null||typeof id==='string'&&ID.test(id)&&c.owned.includes(id)))throw Error('装扮记录不正确；停止写入以保护存档。');const item=COLLECTION_CATALOG.items.find(i=>i.id===id);if(item&&item.category!==slot)throw Error('装扮类别不正确。');}
+    if(s.testAccess!==undefined){
+      const t=s.testAccess;if(!t||typeof t.enabled!=='boolean'||!t.equipment||t.equipment.room!==t.equipment.chair)throw Error('体验装扮记录不正确；原文件已保留。');
+      for(const slot of slots){const id=t.equipment[slot];if(!(id===DEFAULTS[slot]||slot==='accessory'&&id===null||typeof id==='string'&&ID.test(id)))throw Error('体验装扮记录不正确；原文件已保留。');const item=COLLECTION_CATALOG.items.find(i=>i.id===id);if(item&&item.category!==slot)throw Error('体验装扮类别不正确；原文件已保留。');}
+    }
+  }else{
+    const expected=CATALOG.filter(i=>s.creditedMinutes>=i.minutes).map(i=>i.id);
+    if(s.unlocked.length!==expected.length||!expected.every(id=>s.unlocked.includes(id)))throw Error('成长与解锁记录不一致；停止写入以保护存档。');
+    if(![null,'red-scarf','round-glasses'].includes(s.equipment.accessory)||!['stool','reading-chair'].includes(s.equipment.room)||s.equipment.accessory==='round-glasses'&&!s.unlocked.includes('round-glasses')||s.equipment.room==='reading-chair'&&!s.unlocked.includes('reading-chair'))throw Error('装扮记录不正确；停止写入以保护存档。');
+  }
+  if([5,6,7,8].includes(s.schema)){
+    if(s.schema===5&&[s.positions,s.testAccess?.positions].filter(Boolean).some(p=>Object.values(p).some(v=>Object.hasOwn(v,'size'))))throw Error('旧版本包含未知比例字段，保留原存档。');
+    if(s.schema<8)for(const owner of [s,s.testAccess].filter(Boolean)){for(const value of Object.values(owner.positions||{}))if(value.size?.some(n=>n>1536))throw Error('旧版本包含未知展示尺寸；保留原存档。');for(const [slot,id]of Object.entries(owner.equipment)){const item=COLLECTION_CATALOG.items.find(i=>i.id===id&&i.category===slot);if(item&&!item.scene?.placement&&owner.positions?.[id]?.size)throw Error('旧版本此物件不支持保存展示比例；保留原存档。');}}
+    validatePositions(s.positions);validateArrangement(COLLECTION_CATALOG,s.equipment,s.positions);
+    if(s.testAccess)try{validatePositions(s.testAccess.positions);validateArrangement(COLLECTION_CATALOG,s.testAccess.equipment,s.testAccess.positions);}catch(e){throw Error('体验'+e.message);}
+  }
   const ids = new Set();
-  let recorded = s.schema === 3 ? s.settledFocusMs : 0;
+  if(s.schema>=7){validateOrder(s.layerOrder);if(s.testAccess)validateOrder(s.testAccess.layerOrder);}
+  let recorded = s.schema !== 2 ? s.settledFocusMs : 0;
   for (const r of s.schema === 2 ? s.records : []) {
     if (!r || typeof r.id !== 'string' || ids.has(r.id) || !int(r.focusMs)
       || !int(r.durationMs) || r.focusMs > r.durationMs
@@ -59,10 +74,7 @@ function validateState(s, allowLegacy = false) {
   return s;
 }
 
-function award(s) {
-  s.creditedMinutes = Math.floor(s.totalFocusMs / MINUTE);
-  s.unlocked = CATALOG.filter(item => s.creditedMinutes >= item.minutes).map(item => item.id);
-}
+function award(s,catalog=COLLECTION_CATALOG) { s.creditedMinutes=Math.floor(s.totalFocusMs/MINUTE);awardOwned(s,catalog); }
 
 function finish(s, now, outcome) {
   const a = s.active;
@@ -73,13 +85,13 @@ function finish(s, now, outcome) {
   s.active = null;
 }
 
-function advance(s, deltaMs, now) {
+function advance(s, deltaMs, now, catalog=COLLECTION_CATALOG) {
   if (!s.active || s.active.status !== 'running' || deltaMs <= 0) return false;
   const a = s.active;
   const counted = Math.min(Math.floor(deltaMs), a.durationMs - a.elapsedMs);
   if (!counted) return false;
   a.elapsedMs += counted;
-  if (a.kind === 'focus') { s.totalFocusMs += counted; award(s); }
+  if (a.kind === 'focus') { s.totalFocusMs += counted; award(s,catalog); }
   if (a.elapsedMs >= a.durationMs) finish(s, now, 'completed');
   return true;
 }
@@ -92,7 +104,7 @@ function interrupt(s, reason, now) {
   return true;
 }
 
-function command(s, c, now, makeId) {
+function command(s, c, now, makeId, catalog=COLLECTION_CATALOG) {
   if (!c || typeof c.requestId !== 'string' || !/^[\w-]{1,100}$/.test(c.requestId))
     throw new Error('操作标识无效。');
   if (s.processed.includes(c.requestId)) return false;
@@ -123,14 +135,14 @@ function command(s, c, now, makeId) {
       if (typeof c.reducedMotion !== 'boolean') throw new Error('动效偏好无效。');
       s.preferences.reducedMotion = c.reducedMotion;
       break;
-    case 'equip': {
-      if (!['accessory', 'room'].includes(c.slot)) throw new Error('装扮位置无效。');
-      const available = c.slot === 'accessory' ? [null, 'red-scarf', ...s.unlocked.filter(id => id === 'round-glasses')]
-        : ['stool', ...s.unlocked.filter(id => id === 'reading-chair')];
-      if (!available.includes(c.item)) throw new Error('这件物品还没有解锁。');
-      s.equipment[c.slot] = c.item;
+    case 'equip': equip(s,c.slot,c.item,catalog);break;
+    case 'equip-set': equipSet(s,c.equipment,c.expectedEquipment,c.expectedTestEnabled,catalog);break;
+    case 'room-set': saveRoomSet(s,c,catalog,equipSet);break;
+    case 'test-access':
+      if(typeof c.enabled!=='boolean')throw Error('全道具体验开关无效。');
+      if(!s.testAccess)s.testAccess={enabled:false,equipment:structuredClone(s.equipment),positions:structuredClone(s.positions),layerOrder:[...s.layerOrder]};
+      s.testAccess.enabled=c.enabled;
       break;
-    }
     default: throw new Error('不支持的操作。');
   }
   s.processed.push(c.requestId);
@@ -139,14 +151,19 @@ function command(s, c, now, makeId) {
 }
 
 function migrateState(s) {
-  if (s?.schema === 3) return validateState(s);
+  if(s?.schema===8)return validateState(s);
+  if(s?.schema===7){validateState(s,true);const n=structuredClone(s);n.schema=8;return validateState(n);}
+  if(s?.schema===6){validateState(s,true);const n=structuredClone(s);n.schema=7;n.layerOrder=[...DEFAULT_ORDER];n.equipment={...DEFAULTS,...s.equipment};if(n.testAccess){n.testAccess.equipment={...DEFAULTS,...n.testAccess.equipment};n.testAccess.layerOrder=[...DEFAULT_ORDER];}return migrateState(n);}
+  if(s?.schema===5){validateState(s,true);const n=structuredClone(s);n.schema=6;return migrateState(n);}
+  if(s?.schema===4){if(Object.hasOwn(s,'positions')||s.testAccess&&Object.hasOwn(s.testAccess,'positions'))throw Error('旧版本包含未知位置字段，保留原存档。');validateState(s,true);const n=structuredClone(s);n.schema=6;n.positions={};n.equipment={...DEFAULTS,...s.equipment};if(n.testAccess){n.testAccess.equipment={...DEFAULTS,...n.testAccess.equipment};n.testAccess.positions={};}return migrateState(n);}
+  if(s?.schema===3){if(Object.hasOwn(s,'collection'))throw Error('旧版本包含未知收藏字段，原文件已保留。');validateState(s,true);const migrated=structuredClone(s);migrated.schema=4;migrated.collection={owned:[...s.unlocked],catalogVersion:COLLECTION_CATALOG.version};migrated.equipment={...DEFAULTS,...s.equipment,chair:s.equipment.room};return migrateState(validateState(migrated,true));}
   if (s?.schema === 2) {
     validateState(s, true);
     const migrated = structuredClone(s);
     migrated.schema = 3;
     migrated.settledFocusMs = s.records.reduce((total,r) => total+r.focusMs,0);
     delete migrated.records;
-    return validateState(migrated);
+    return migrateState(validateState(migrated,true));
   }
   if (s?.schema !== 1) return validateState(s);
   if (!s.equipment || ![null, 'desk-plant'].includes(s.equipment.room)
