@@ -35,10 +35,10 @@ test('Schema8 valid bytes migrate additively; unknown mirror/large old coordinat
   try{if(bad){assert.throws(()=>store.read());assert(fs.readFileSync(f).equals(bytes));}else{const s=store.read();assert.equal(s.schema,9);assert.deepEqual({...s,schema:8},old);const backup=path.join(dir,'focus-state.schema8-'+crypto.createHash('sha256').update(bytes).digest('hex')+'.json');assert(fs.readFileSync(backup).equals(bytes));}}finally{store.close();}
  }
 });
-test('Viewport camera fills actual room rather than losing the letterbox area, while preserving accepted artwork scale and center',()=>{
- const {roomCamera,mapPoint}=require('../ui/room-geometry.cjs');for(const [w,h]of[[186,145],[186,264],[387,154],[387,538]]){const c=roomCamera(w,h);near(c.width*c.scale,w,'fill width');near(c.height*c.scale,h,'fill height');const center=mapPoint([512,760],c);near(center[0],w/2,'center X');near(center[1],h/2,'center Y');near(c.scale,Math.min(w/1024,h/1000),'original art scale');assert(c.x<=0&&c.y<=260);assert(c.x+c.width>=1024&&c.y+c.height>=1260);}
+test('All four viewports contain the same full portrait world without a hidden inner crop',()=>{
+ const {roomCamera,mapPoint,WORLD}=require('../ui/room-geometry.cjs');for(const [w,h]of[[186,126],[186,264],[387,264],[387,538]]){const c=roomCamera(w,h);near(c.width*c.scale,w,'fill width');near(c.height*c.scale,h,'fill height');const center=mapPoint([WORLD[0]/2,WORLD[1]/2],c);near(center[0],w/2,'center X');near(center[1],h/2,'center Y');for(const p of [[0,0],WORLD]){const q=mapPoint(p,c);assert(q[0]>=-1e-7&&q[0]<=w+1e-7);assert(q[1]>=-1e-7&&q[1]<=h+1e-7);}}
 });
 
-test('Full module camera keeps the original registered role in place and exposes art above/below the old scene in normal and dressing modes',()=>{
- const {roomCamera,mapPoint}=require('../ui/room-geometry.cjs');for(const [w,h,reference]of[[372,248,{x:0,y:65,width:372,height:145}],[372,538,{x:0,y:54,width:208,height:402}]]){const c=roomCamera(reference.width,h,reference),center=mapPoint([512,760],c);near(center[0],reference.width/2,'role X');near(center[1],reference.y+reference.height/2,'role Y');near(c.scale,Math.min(reference.width/1024,reference.height/1000),'unchanged role size');assert(c.y<260&&c.y+c.height>1260);}
+test('The drawer contains the same world; control-row height cannot change artwork size or registration',()=>{
+ const {roomCamera,mapPoint,WORLD}=require('../ui/room-geometry.cjs');for(const [w,h]of[[186,126],[186,264],[387,264],[387,538]]){const pane={x:0,y:54,width:w*.56,height:Math.max(1,h-54)},a=roomCamera(w,h,pane),b=roomCamera(w,h,{...pane,height:Math.max(1,h-129)});assert.deepEqual(a,b);for(const p of [[0,0],WORLD]){const q=mapPoint(p,a);assert(q[0]>=-1e-7&&q[0]<=pane.width+1e-7);assert(q[1]>=-1e-7&&q[1]<=h+1e-7);}}
 });
