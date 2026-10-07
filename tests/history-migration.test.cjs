@@ -9,7 +9,7 @@ function legacy(){
 test('Archive old bytes before replacing history, preserve rewards/equipment/active and never recreate history',t=>{
  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'owl-history-synthetic-'));t.after(()=>fs.rmSync(dir,{recursive:true,force:true}));const file=path.join(dir,'focus-state.json'),raw=legacy(),bytes=JSON.stringify(raw,null,2);fs.writeFileSync(file,bytes);
  const store=new FileStore(dir);t.after(()=>store.close());const s=store.read();const hash=createHash('sha256').update(bytes).digest('hex'),backup=path.join(dir,`focus-state.schema2-${hash}.json`);
- assert.equal(fs.readFileSync(backup,'utf8'),bytes);assert.equal(s.schema,8);assert.equal('records' in s,false);assert.equal(s.settledFocusMs,600000);assert.equal(s.equipment.chair,raw.equipment.room);assert.equal(s.equipment.accessory,raw.equipment.accessory);assert.deepEqual(s.collection.owned,raw.unlocked);for(const key of ['totalFocusMs','creditedMinutes','unlocked','active','preferences','processed','lastSavedAt'])assert.deepEqual(s[key],raw[key]);
+ assert.equal(fs.readFileSync(backup,'utf8'),bytes);assert.equal(s.schema,9);assert.equal('records' in s,false);assert.equal(s.settledFocusMs,600000);assert.equal(s.equipment.chair,raw.equipment.room);assert.equal(s.equipment.accessory,raw.equipment.accessory);assert.deepEqual(s.collection.owned,raw.unlocked);for(const key of ['totalFocusMs','creditedMinutes','unlocked','active','preferences','processed','lastSavedAt'])assert.deepEqual(s[key],raw[key]);
  let mono=0;const svc=new FocusService(store,{clock:()=>({mono,wall:621000+mono})});assert.equal(svc.snapshot().active.id,raw.active.id);assert.equal(svc.snapshot().active.status,'paused');svc.dispatch({type:'resume',requestId:'resume',sessionId:raw.active.id});
  for(let n=0;n<4;n++){mono+=10000;svc.tick();}const done=svc.snapshot();assert.equal(done.active,null);assert.equal(done.totalFocusMs,660000);assert.equal(done.settledFocusMs,660000);assert.equal(done.creditedMinutes,11);assert.equal(done.lastOutcome.outcome,'completed');assert.equal('records' in done,false);assert.equal('records' in JSON.parse(fs.readFileSync(file)),false);assert.equal(fs.readFileSync(backup,'utf8'),bytes);validateState(done);
  svc.close();const reopen=new FileStore(dir);try{assert.equal(reopen.read().settledFocusMs,660000);}finally{reopen.close();}
@@ -38,7 +38,7 @@ test('Valid multilingual legacy backup preserves raw bytes and is reusable uncha
  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'owl-utf8-backup-'));t.after(()=>fs.rmSync(dir,{recursive:true,force:true}));
  const state=legacy();state.records[0].task='合成中文 · café · 🦉';const bytes=Buffer.from(JSON.stringify(state,null,2)+'\n'),hash=createHash('sha256').update(bytes).digest('hex');
  const file=path.join(dir,'focus-state.json'),backup=path.join(dir,`focus-state.schema2-${hash}.json`);fs.writeFileSync(file,bytes);fs.writeFileSync(backup,bytes);
- const store=new FileStore(dir);try{assert.equal(store.read().schema,8);assert.deepEqual(fs.readFileSync(backup),bytes);}finally{store.close();}
+ const store=new FileStore(dir);try{assert.equal(store.read().schema,9);assert.deepEqual(fs.readFileSync(backup),bytes);}finally{store.close();}
 });
 
 function failDirectorySyncAfterReplace(file,action){
@@ -52,7 +52,7 @@ test('Post-rename migration sync failure reports replacement honestly and retain
  const bytes=Buffer.from(JSON.stringify(legacy())),file=path.join(dir,'focus-state.json'),hash=createHash('sha256').update(bytes).digest('hex');fs.writeFileSync(file,bytes);
  const store=new FileStore(dir);try{
   failDirectorySyncAfterReplace(file,()=>assert.throws(()=>store.read(),error=>/存档已替换/.test(error.message)&&!/未覆盖原文件/.test(error.message)));
-  assert.equal(JSON.parse(fs.readFileSync(file)).schema,8);assert.deepEqual(fs.readFileSync(path.join(dir,`focus-state.schema2-${hash}.json`)),bytes);
+  assert.equal(JSON.parse(fs.readFileSync(file)).schema,9);assert.deepEqual(fs.readFileSync(path.join(dir,`focus-state.schema2-${hash}.json`)),bytes);
  }finally{store.close();}
 });
 test('Post-rename normal save stops timing with an unconfirmed-durability warning',t=>{

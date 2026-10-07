@@ -7,10 +7,10 @@ function contains(a,b){return b[0]>=a[0]&&b[1]>=a[1]&&b[0]+b[2]<=a[0]+a[2]&&b[1]
 function intersects(a,b){return a[0]<b[0]+b[2]&&b[0]<a[0]+a[2]&&a[1]<b[1]+b[3]&&b[1]<a[1]+a[3];}
 function renderedGeometry(s){
  const {scale=1,anchor=[0,0]}=s.display||{};
- if(!Number.isFinite(scale)||scale<.1||scale>3||!finite(anchor)||anchor.length!==2)throw Error('物件展示比例无效。');
+ if(!Number.isFinite(scale)||scale<.1||scale>32||!finite(anchor)||anchor.length!==2)throw Error('物件展示比例无效。');
  const point=p=>[anchor[0]+(p[0]-anchor[0])*scale,anchor[1]+(p[1]-anchor[1])*scale];
- const bounds=r=>[...point(r.slice(0,2)),r[2]*scale,r[3]*scale];
- return {visualBounds:bounds(s.visualBounds),collisionBounds:bounds(s.collisionBounds),contacts:s.contacts.map(point)};
+ const bounds=r=>{const q=point(r.slice(0,2)),w=r[2]*scale;return[s.display?.mirrorX?2*anchor[0]-q[0]-w:q[0],q[1],w,r[3]*scale];};
+ return {visualBounds:bounds(s.visualBounds),collisionBounds:bounds(s.collisionBounds),contacts:s.contacts.map(p=>{const q=point(p);return s.display?.mirrorX?[2*anchor[0]-q[0],q[1]]:q;})};
 }
 function validateRegistration(s){
  if(!s.placement)return;
@@ -53,12 +53,12 @@ function validateRoomCatalog(c){
  return c;
 }
 // All four host sizes keep the complete occupied room region and contacts.
-// Timer/buttons are independently laid out at readable size outside this viewport.
-function roomCamera(width,height){
+// Preserve the old artwork registration while drawing beneath fixed UI.
+function roomCamera(width,height,reference={x:0,y:0,width,height}){
  if(!Number.isFinite(width)||!Number.isFinite(height)||width<=0||height<=0)throw Error('房间视口无效。');
- const crop={x:0,y:260,width:1024,height:1000},scale=Math.min(width/crop.width,height/crop.height);
- return {...crop,scale,offsetX:(width-crop.width*scale)/2,offsetY:(height-crop.height*scale)/2};
+ const crop={x:0,y:260,width:1024,height:1000};if(![reference.x,reference.y,reference.width,reference.height].every(Number.isFinite)||reference.width<=0||reference.height<=0)throw Error('房间注册视口无效。');const scale=Math.min(reference.width/crop.width,reference.height/crop.height);
+ return {x:512-(reference.x+reference.width/2)/scale,y:760-(reference.y+reference.height/2)/scale,width:width/scale,height:height/scale,scale,offsetX:0,offsetY:0};
 }
 function mapPoint(p,c){return [c.offsetX+(p[0]-c.x)*c.scale,c.offsetY+(p[1]-c.y)*c.scale];}
 if(typeof module!=='undefined')module.exports={WORLD,FLOOR,rect,contains,intersects,renderedGeometry,validateRoomCatalog,roomCamera,mapPoint};
-else globalThis.owlRoomGeometry={WORLD,FLOOR,rect,contains,intersects,renderedGeometry,validateRoomCatalog,roomCamera,mapPoint};
+globalThis.owlRoomGeometry={WORLD,FLOOR,rect,contains,intersects,renderedGeometry,validateRoomCatalog,roomCamera,mapPoint};

@@ -29,7 +29,7 @@ test('schema1 engineering progress migrates plant to chair with byte-identical b
   const bytes=JSON.stringify(s,null,2);fs.writeFileSync(file,bytes);
   const store=new FileStore(dir);
   try {
-    const migrated=store.read();assert.equal(migrated.schema,8);assert.equal(migrated.equipment.room,'reading-chair');
+    const migrated=store.read();assert.equal(migrated.schema,9);assert.equal(migrated.equipment.room,'reading-chair');
     assert.equal(migrated.totalFocusMs,600000);assert.equal('records' in migrated,false);assert.equal(migrated.settledFocusMs,600000);
     const backup=fs.readdirSync(dir).find(name=>name.startsWith('focus-state.schema1-'));
     assert.equal(fs.readFileSync(path.join(dir,backup),'utf8'),bytes);

@@ -11,7 +11,7 @@ const {DEFAULT_ORDER,validateOrder}=require('../ui/layer-order.cjs');
 const CATALOG=Object.freeze([{id:'round-glasses',name:'圆眼镜',slot:'accessory',minutes:5},{id:'reading-chair',name:'阅读椅',slot:'room',minutes:10}]);
 
 function initialState() {
-  return { schema: 8, positions:{}, layerOrder:[...DEFAULT_ORDER], revision: 0, totalFocusMs: 0, creditedMinutes: 0,
+  return { schema: 9, positions:{}, layerOrder:[...DEFAULT_ORDER], revision: 0, totalFocusMs: 0, creditedMinutes: 0,
     unlocked: [], collection: {owned:[],catalogVersion:COLLECTION_CATALOG.version}, equipment: {...DEFAULTS,room:'stool'},
     active: null, settledFocusMs: 0, processed: [], lastOutcome: null, lastSavedAt: null,
     preferences: { reducedMotion: false } };
@@ -19,7 +19,7 @@ function initialState() {
 
 function validateState(s, allowLegacy = false) {
   const int = n => Number.isSafeInteger(n) && n >= 0;
-  if (!s || !(s.schema === 8 || (allowLegacy && [2,3,4,5,6,7].includes(s.schema))) || !int(s.revision) || !int(s.totalFocusMs)
+  if (!s || !(s.schema === 9 || (allowLegacy && [2,3,4,5,6,7,8].includes(s.schema))) || !int(s.revision) || !int(s.totalFocusMs)
     || !int(s.creditedMinutes) || s.creditedMinutes !== Math.floor(s.totalFocusMs / MINUTE)
     || (s.schema === 2 ? !Array.isArray(s.records) : (!int(s.settledFocusMs) || Object.hasOwn(s,'records')))
     || !Array.isArray(s.processed) || s.processed.length > 128
@@ -30,7 +30,7 @@ function validateState(s, allowLegacy = false) {
     || !s.preferences || typeof s.preferences.reducedMotion !== 'boolean') {
     throw new Error('保存格式不正确；原文件已保留，不能用空白进度覆盖。');
   }
-  if([4,5,6,7,8].includes(s.schema)){
+  if([4,5,6,7,8,9].includes(s.schema)){
     const c=s.collection;if(!c||!Array.isArray(c.owned)||new Set(c.owned).size!==c.owned.length||!c.owned.every(id=>typeof id==='string'&&ID.test(id))||typeof c.catalogVersion!=='string'||!c.catalogVersion||c.owned.length!==s.unlocked.length||!c.owned.every(id=>s.unlocked.includes(id)))throw Error('永久收藏记录不一致；原文件已保留。');
     if(s.equipment.room!==s.equipment.chair)throw Error('座位兼容记录不一致。');
     const slots=s.schema===4?LEGACY_SLOTS:s.schema>=7?SLOTS:BASE_SLOTS;
@@ -44,11 +44,12 @@ function validateState(s, allowLegacy = false) {
     if(s.unlocked.length!==expected.length||!expected.every(id=>s.unlocked.includes(id)))throw Error('成长与解锁记录不一致；停止写入以保护存档。');
     if(![null,'red-scarf','round-glasses'].includes(s.equipment.accessory)||!['stool','reading-chair'].includes(s.equipment.room)||s.equipment.accessory==='round-glasses'&&!s.unlocked.includes('round-glasses')||s.equipment.room==='reading-chair'&&!s.unlocked.includes('reading-chair'))throw Error('装扮记录不正确；停止写入以保护存档。');
   }
-  if([5,6,7,8].includes(s.schema)){
+  if([5,6,7,8,9].includes(s.schema)){
     if(s.schema===5&&[s.positions,s.testAccess?.positions].filter(Boolean).some(p=>Object.values(p).some(v=>Object.hasOwn(v,'size'))))throw Error('旧版本包含未知比例字段，保留原存档。');
     if(s.schema<8)for(const owner of [s,s.testAccess].filter(Boolean)){for(const value of Object.values(owner.positions||{}))if(value.size?.some(n=>n>1536))throw Error('旧版本包含未知展示尺寸；保留原存档。');for(const [slot,id]of Object.entries(owner.equipment)){const item=COLLECTION_CATALOG.items.find(i=>i.id===id&&i.category===slot);if(item&&!item.scene?.placement&&owner.positions?.[id]?.size)throw Error('旧版本此物件不支持保存展示比例；保留原存档。');}}
-    validatePositions(s.positions);validateArrangement(COLLECTION_CATALOG,s.equipment,s.positions);
-    if(s.testAccess)try{validatePositions(s.testAccess.positions);validateArrangement(COLLECTION_CATALOG,s.testAccess.equipment,s.testAccess.positions);}catch(e){throw Error('体验'+e.message);}
+    if(s.schema<9)for(const owner of [s,s.testAccess].filter(Boolean))for(const [slot,id]of Object.entries(owner.equipment)){const item=COLLECTION_CATALOG.items.find(i=>i.id===id&&i.category===slot),size=owner.positions?.[id]?.size;if(size&&item?.scene&&!item.scene.placement&&size[0]/item.scene.size[0]>3)throw Error('旧版本包含未知展示比例；保留原存档。');}
+    validatePositions(s.positions,{legacy:s.schema<9});validateArrangement(COLLECTION_CATALOG,s.equipment,s.positions,{legacy:s.schema<9});
+    if(s.testAccess)try{validatePositions(s.testAccess.positions,{legacy:s.schema<9});validateArrangement(COLLECTION_CATALOG,s.testAccess.equipment,s.testAccess.positions,{legacy:s.schema<9});}catch(e){throw Error('体验'+e.message);}
   }
   const ids = new Set();
   if(s.schema>=7){validateOrder(s.layerOrder);if(s.testAccess)validateOrder(s.testAccess.layerOrder);}
@@ -151,8 +152,9 @@ function command(s, c, now, makeId, catalog=COLLECTION_CATALOG) {
 }
 
 function migrateState(s) {
-  if(s?.schema===8)return validateState(s);
-  if(s?.schema===7){validateState(s,true);const n=structuredClone(s);n.schema=8;return validateState(n);}
+  if(s?.schema===9)return validateState(s);
+  if(s?.schema===8){validateState(s,true);const n=structuredClone(s);n.schema=9;return validateState(n);}
+  if(s?.schema===7){validateState(s,true);const n=structuredClone(s);n.schema=8;return migrateState(n);}
   if(s?.schema===6){validateState(s,true);const n=structuredClone(s);n.schema=7;n.layerOrder=[...DEFAULT_ORDER];n.equipment={...DEFAULTS,...s.equipment};if(n.testAccess){n.testAccess.equipment={...DEFAULTS,...n.testAccess.equipment};n.testAccess.layerOrder=[...DEFAULT_ORDER];}return migrateState(n);}
   if(s?.schema===5){validateState(s,true);const n=structuredClone(s);n.schema=6;return migrateState(n);}
   if(s?.schema===4){if(Object.hasOwn(s,'positions')||s.testAccess&&Object.hasOwn(s.testAccess,'positions'))throw Error('旧版本包含未知位置字段，保留原存档。');validateState(s,true);const n=structuredClone(s);n.schema=6;n.positions={};n.equipment={...DEFAULTS,...s.equipment};if(n.testAccess){n.testAccess.equipment={...DEFAULTS,...n.testAccess.equipment};n.testAccess.positions={};}return migrateState(n);}

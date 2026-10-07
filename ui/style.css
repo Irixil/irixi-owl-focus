@@ -159,3 +159,24 @@ output{font-weight:400;white-space:nowrap}
 .placement-directions,.placement-sizing{display:flex;width:100%;gap:1px}
 .placement-sizing [data-size="reset"]{flex:2 1 44px;font-size:11px;white-space:nowrap}
 .placement-sizing button{font-size:12px}
+
+/* Render across the entire visible room; only the actual window/UI clips it. */
+.portrait-room #owl-interaction canvas{width:100%;height:100%;max-width:none;object-fit:fill}
+.arranging .scene{grid-template-rows:minmax(0,1fr) 75px}
+.arranging #owl-interaction{bottom:75px}
+.arranging #placement-controls{width:min(190px,calc(100% - 4px));padding:2px;gap:2px}
+.placement-tools{display:flex;width:100%;gap:2px}
+#placement-controls .placement-tools button{width:auto;flex:1;font-size:11px;white-space:nowrap}
+.placement-percent{display:flex;align-items:center;gap:1px;flex:2;min-width:0;margin:0;font-size:11px}
+#placement-percent{width:100%;min-width:0;height:22px;min-height:22px;padding:0 2px;font-size:11px;text-align:center}
+#placement-percent::-webkit-inner-spin-button{display:none}
+.placement-sizing [data-size="reset"]{flex:1;font-size:10px}
+@media(max-height:180px){.arranging .scene{grid-template-rows:minmax(0,1fr) 65px}.arranging #owl-interaction{bottom:65px}#placement-percent{height:19px;min-height:19px;font-size:10px}#placement-controls .placement-tools button{font-size:10px}}
+#placement-percent{margin:0}
+.placement-percent{flex:2 1 60px;min-width:38px}
+.placement-percent span{flex:0 0 auto}
+
+/* Decorations span the whole module behind its fixed controls in both modes.
+   Keep the role's original scene registration instead of fitting its bounds. */
+.portrait-room #owl-interaction{position:fixed;top:0;bottom:0;left:0;right:auto;width:100%}
+.portrait-room .timer{z-index:3;pointer-events:none}

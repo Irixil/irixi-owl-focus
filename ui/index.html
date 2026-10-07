@@ -23,7 +23,11 @@
         <img id="owl-fallback" src="assets/concept-v4.png" alt="红围巾猫头鹰坐在凳子上，捧着杯子" />
       </div>
       <div id="placement-highlight" hidden aria-hidden="true"></div>
-      <div id="placement-controls" hidden aria-label="布置选中物件"><div class="placement-directions"><button type="button" data-move="left" aria-label="向左移动">←</button><button type="button" data-move="up" aria-label="向上移动">↑</button><button type="button" data-move="down" aria-label="向下移动">↓</button><button type="button" data-move="right" aria-label="向右移动">→</button><button type="button" data-layer="forward" title="往前一层" aria-label="往前一层">前</button><button type="button" data-layer="backward" title="往后一层" aria-label="往后一层">后</button></div><div class="placement-sizing" aria-label="道具大小，50%至200%"><button type="button" data-size="smaller" title="缩小10%" aria-label="缩小道具">−</button><button type="button" data-size="reset" title="恢复原大小，保留位置" aria-label="恢复原大小">100%</button><button type="button" data-size="larger" title="放大10%" aria-label="放大道具">+</button></div></div>
+      <div id="placement-controls" hidden aria-label="布置选中物件">
+        <div class="placement-directions"><button type="button" data-move="left" aria-label="向左移动">←</button><button type="button" data-move="up" aria-label="向上移动">↑</button><button type="button" data-move="down" aria-label="向下移动">↓</button><button type="button" data-move="right" aria-label="向右移动">→</button><button type="button" data-layer="forward" title="往前一层" aria-label="往前一层">前</button><button type="button" data-layer="backward" title="往后一层" aria-label="往后一层">后</button></div>
+        <div class="placement-sizing" aria-label="道具大小，50%至500%"><button type="button" data-size="smaller" title="缩小10%" aria-label="缩小道具">−</button><label class="placement-percent"><input id="placement-percent" type="number" min="50" max="500" step="1" value="100" aria-label="道具大小百分比，50至500" /><span>%</span></label><button type="button" data-size="larger" title="放大10%" aria-label="放大道具">+</button><button type="button" data-size="reset" title="恢复原大小，保留位置" aria-label="恢复原大小">原大</button></div>
+        <div class="placement-tools"><button type="button" data-placement="mirror" aria-pressed="false" title="左右镜像选中道具">镜像</button><button type="button" data-placement="recover" title="找回到默认位置，保留大小和镜像">找回</button><button type="button" data-placement="remove" title="从房间卸下，保留收藏与装扮记录">卸下</button></div>
+      </div>
       <small id="development-art-note" hidden>开发占位 · 非最终美术</small>
       <span id="owl-response" class="sr-only" role="status" aria-live="polite"></span>
     </section>

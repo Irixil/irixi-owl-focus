@@ -12,12 +12,12 @@ export async function loadRoomAssets(catalog){
  await Promise.all((catalog.items||[]).filter(i=>i.assetState==='ready'&&i.scene?.hanging?.src).map(async i=>{try{if(!items[i.id])return;items[i.id].cord=await image(i.scene.hanging.src,i.scene.hanging.size);}catch{delete items[i.id];missing.push(i.name);}}));
  return {base,items,missing};
 }
-export function composeRoom(ctx,base,items,equipment,source,{legacyImages={},bodyAtlas,roleDisplay=ROLE_DISPLAY,positions={},catalog,layerOrder=globalThis.owlLayerOrder.DEFAULT_ORDER}={}){
- ctx.clearRect(0,0,1024,1536);ctx.drawImage(base,0,0);
+export function composeRoom(ctx,base,items,equipment,source,{legacyImages={},bodyAtlas,roleDisplay=ROLE_DISPLAY,positions={},catalog,layerOrder=globalThis.owlLayerOrder.DEFAULT_ORDER,camera}={}){
+ ctx.clearRect(0,0,ctx.canvas.width,ctx.canvas.height);ctx.save();if(camera){const scale=ctx.canvas.width/camera.width;ctx.scale(scale,scale);ctx.translate(-camera.x,-camera.y);}ctx.drawImage(base,0,0);
  const lookup=id=>catalog?.items.find(i=>i.id===id),offset=(id,key=id)=>lookup(id)?globalThis.owlPlacementRules.resolvedOffset(lookup(id),equipment,positions,catalog):positions[key]||{x:0,y:0},table=offset(equipment['side-furniture']);
  const draw=category=>{if(category==='tabletop'&&!globalThis.owlPlacementRules.tabletopParent(equipment,catalog))return;const id=equipment[category],item=items[id],image=item?.image;if(!image)return;const key=category==='tabletop'?`${equipment['side-furniture']}--${id}`:id,p=offset(id,key),parent=category==='tabletop'?table:{x:0,y:0};const hanging=lookup(id)?.scene?.hanging;
  if(hanging&&item.cord){const [w,h]=hanging.displaySize,x=hanging.topLeft[0]+p.x,top=hanging.ceilingY,bottom=hanging.attachment[1]+p.y;for(let y=top;y<bottom;y+=h){const slice=Math.min(h,bottom-y);ctx.drawImage(item.cord,0,0,item.cord.naturalWidth,item.cord.naturalHeight*slice/h,x,y,w,slice);}}
- const selected=globalThis.owlPlacementRules.selectedScene(lookup(id),equipment,positions,catalog);ctx.save();ctx.translate(p.x+parent.x,p.y+parent.y);if(selected?.display||item.display){const {scale,anchor}=selected?.display||item.display;ctx.translate(anchor[0],anchor[1]);ctx.scale(scale,scale);ctx.translate(-anchor[0],-anchor[1]);}if(item.placement){const v=selected?.placement||item.placement,a=v.anchor,z=v.position,w=v.displaySize,x=z[0]-a[0]*w[0]/item.sourceSize[0],y=z[1]-a[1]*w[1]/item.sourceSize[1];if(v.mirrorX){ctx.translate(x+w[0],y);ctx.scale(-1,1);ctx.drawImage(image,0,0,w[0],w[1]);}else ctx.drawImage(image,x,y,w[0],w[1]);}else ctx.drawImage(image,0,0);ctx.restore();};
+ const selected=globalThis.owlPlacementRules.selectedScene(lookup(id),equipment,positions,catalog);ctx.save();ctx.translate(p.x+parent.x,p.y+parent.y);if(selected?.display||item.display){const {scale,anchor}=selected?.display||item.display;ctx.translate(anchor[0],anchor[1]);ctx.scale((selected?.display||item.display).mirrorX?-scale:scale,scale);ctx.translate(-anchor[0],-anchor[1]);}if(item.placement){const v=selected?.placement||item.placement,a=v.anchor,z=v.position,w=v.displaySize,x=z[0]-a[0]*w[0]/item.sourceSize[0],y=z[1]-a[1]*w[1]/item.sourceSize[1];if(v.mirrorX){ctx.translate(x+w[0],y);ctx.scale(-1,1);ctx.drawImage(image,0,0,w[0],w[1]);}else ctx.drawImage(image,x,y,w[0],w[1]);}else ctx.drawImage(image,0,0);ctx.restore();};
  const drawSeat=()=>{
  const chair=equipment.chair||equipment.room;
  const seat=positions[chair]||{x:0,y:0};
@@ -27,5 +27,5 @@ export function composeRoom(ctx,base,items,equipment,source,{legacyImages={},bod
  ctx.drawImage(source,roleDisplay.offset[0]+seat.x,roleDisplay.offset[1]+seat.y,900*roleDisplay.scale,1000*roleDisplay.scale);
  const front=items[chair]?.front||(chair==='reading-chair'?legacyImages.chairFront:null);if(front){ctx.save();ctx.translate(seat.x,seat.y);ctx.translate(85,300);ctx.scale(.681,.681);ctx.drawImage(front,0,0);ctx.restore();}
  };
- for(const category of globalThis.owlLayerOrder.validateOrder(layerOrder)){if(category==='chair')drawSeat();else if(category==='side-furniture'){draw(category);draw('tabletop');}else draw(category);}
+ for(const category of globalThis.owlLayerOrder.validateOrder(layerOrder)){if(category==='chair')drawSeat();else if(category==='side-furniture'){draw(category);draw('tabletop');}else draw(category);}ctx.restore();
 }

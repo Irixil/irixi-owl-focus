@@ -69,7 +69,7 @@ test('REGRESSION: healthy thumbnail cannot authorize whole save after the main r
  const savedGlobals = Object.fromEntries(['window','document','Image','requestAnimationFrame','cancelAnimationFrame'].map(k=>[k,{exists:k in globalThis,value:globalThis[k]}]));
  const f=canvasFixture(), canvases=[];
  const pixels = new Uint8ClampedArray(900*1000*4);pixels[(100*900+100)*4+3]=255;pixels[(900*900+800)*4+3]=255;
- function makeCanvas(){const el=new Element('canvas'),c=f.makeCanvas(),ctx=c.getContext('2d');ctx.getImageData=()=>({data:pixels});el.width=c.width;el.height=c.height;el.tag=c.tag;el.getContext=()=>ctx;el.ownerDocument={createElement:makeElement};canvases.push(el);return el;}
+ function makeCanvas(){const el=new Element('canvas'),c=f.makeCanvas(),ctx=c.getContext('2d');ctx.getImageData=()=>({data:pixels});el.width=c.width;el.height=c.height;el.tag=c.tag;el.getBoundingClientRect=c.getBoundingClientRect;el.getContext=()=>ctx;el.ownerDocument={createElement:makeElement};canvases.push(el);return el;}
  function makeElement(tag){return tag==='canvas'?makeCanvas():new Element(tag);}
  const ids=['collection-open','wardrobe-toggle','collection-mode','collection-panel','collection-tabs','collection-cards','collection-preview','collection-preview-name','collection-message','collection-confirm','collection-cancel','owl-canvas','owl-fallback','motion-note','collection-back','collection-retained','collection-defaults'];
  const elements=Object.fromEntries(ids.map(id=>[id,id.endsWith('-canvas')?makeCanvas():new Element()]));

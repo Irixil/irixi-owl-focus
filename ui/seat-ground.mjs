@@ -43,6 +43,6 @@ export function paintSeatGround(ctx, metrics, crop) {
   ctx.restore();
 }
 export function containedCanvasRect(canvas) {
-  const r = canvas.getBoundingClientRect(), scale = Math.min(r.width / canvas.width, r.height / canvas.height);
-  return { scale, x: r.left + (r.width - canvas.width * scale) / 2, y: r.top + (r.height - canvas.height * scale) / 2 };
+  const r = canvas.getBoundingClientRect(), crop=canvas.dataset?.sourceCrop?JSON.parse(canvas.dataset.sourceCrop):{width:canvas.width,height:canvas.height}, scale = Math.min(r.width / crop.width, r.height / crop.height);
+  return { scale, x: r.left + (r.width - crop.width * scale) / 2, y: r.top + (r.height - crop.height * scale) / 2 };
 }

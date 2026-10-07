@@ -10,7 +10,7 @@ function canvasFixture(){
       rotate(x){matrix=mul(matrix,[Math.cos(x),Math.sin(x),-Math.sin(x),Math.cos(x),0,0]);},transform(...m){matrix=mul(matrix,m);},setTransform(...m){matrix=m;},
       drawImage(image,...args){const draw={target:tag,image:image.tag||'image',args,matrix:[...matrix],alpha:this.globalAlpha,composite:this.globalCompositeOperation};allDraws.push(draw);if(root)rootDraws.push(draw);},
     };
-    return {tag,width,height,getContext:()=>new Proxy(target,{get:(o,k)=>k in o?o[k]:()=>{}})};
+    const canvas={tag,width,height,getBoundingClientRect:()=>({left:0,top:0,width,height}),getContext:()=>new Proxy(target,{get:(o,k)=>k in o?o[k]:()=>{}})};target.canvas=canvas;return canvas;
   }
   const canvas=makeCanvas(900,1000,true);
   return {canvas,makeCanvas,allDraws,rootDraws,reset(){allDraws.length=rootDraws.length=0;}};

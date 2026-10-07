@@ -26,7 +26,7 @@ export function bindCollectionPanel({root,details,onPreview=()=>{},onSave,onOpen
  const reward=get('collection-reward'),rewardQueue=[];let shownReward;
  const isOpen=()=>Boolean(draft.equipment);
  const publish=()=>{onPreview({...draft.equipment},structuredClone(draft.positions),[...draft.layerOrder]);refreshSelected();};
- const placement=placementBinder({root,draft,onChange:publish,onMessage:text=>{message.textContent=text;}});
+ const placement=placementBinder({root,draft,onChange:()=>{publish();draw();},onMessage:text=>{message.textContent=text;}});
  get('collection-defaults').addEventListener('click',()=>{try{draft.resetAll();saveError='';publish();placement.repaint();}catch(e){saveError=e.message;refreshSelected();}});
  function close(){if(saving)return;placement.setMode(false);draft.clear();previewReady=false;panel.hidden=true;preview.hidden=true;onPreview(null);onOpenChange(false);toggle?.setAttribute('aria-expanded','false');signature=null;toggle?.focus?.();}
  function open(){if(!state||busy||state.fault)return;saveError='';details.open=false;draft.begin(state);panel.hidden=false;preview.hidden=false;previewReady=false;toggle?.setAttribute('aria-expanded','true');onOpenChange(true);signature=null;onPreview({...draft.equipment},structuredClone(draft.positions),[...draft.layerOrder]);draw();}
