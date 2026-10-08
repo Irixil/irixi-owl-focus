@@ -12,7 +12,7 @@
 | `ui/assets/outfit/reading-chair-back.png`、`reading-chair-front.png` | 生成的阅读椅前后层 |
 | `ui/assets/outfit/provenance/manifest.json` | 最终装备尺寸和文件校验值，已去除私人交接标识 |
 | `docs/images/room-widget.png` | 本项目隔离应用中直接捕获的原生组件画面，新存档，无实际任务或 APP 记录 |
-| `ui/assets/room-paper.svg`、`room-window.svg` | 下一版本地候选的静态纸纹及正视窗，项目自行编写的 SVG，不含参考图像素 |
+| `ui/assets/room-paper.svg`、`room-window.svg` | 历史兼容的静态纸纹及正视窗，项目自行编写的 SVG，不含参考图像素 |
 
 角色和装备的发布使用当前项目自身已获准使用的生成素材。本仓库没有附带竞品图片或后续背景参考图。
 
@@ -25,3 +25,5 @@ Electron 和 npm 依赖通过锁文件安装，许可证随其分发内容提供
 README 概念主图与小物副图沿用本项目生成艺术素材排版合成，明确标注概念示意。Noto 字体只以栅格文字进入图片，不分发字体本体，原版权与授权文本见 images/font-notices；来源说明见 images/concept-sources.txt。实际 UI GIF 使用隔离测试数据，与静态概念图分开标注。
 
 `ui/assets/cream-grain.png` 为本项目自行生成的透明静态纸纹，仅用于番茄钟背景和收藏面板，未使用参考图像素。原角色与房间艺术 PNG 保持不变。
+
+当前竖版房间使用 `ui/assets/room-v30/room-base.png` 及同目录原道具层，后续道具注册说明见各素材目录的manifest和本项目房间／配件文档。本轮颜色与纹理修正未重绘或改色这些原PNG；纸纹是独立叠层。
