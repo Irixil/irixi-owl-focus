@@ -23,3 +23,5 @@ Electron 和 npm 依赖通过锁文件安装，许可证随其分发内容提供
 本模块UI新增站酷快乐体 ZCOOLKuaiLe-Regular.ttf，来自 [Google Fonts 官方目录](https://github.com/google/fonts/tree/main/ofl/zcoolkuaile)，未经修改，SHA-256 812a6fc1fe54b6d73a419245c32dfeba8aa33104d5be90d1cf6af082007cb71d，随附 ZCOOLKuaiLe-OFL.txt（SIL OFL 1.1）。它用于粗粝、微歪手写界面；罕见汉字回退本地霞鹜文楷。计时数字固定字框保留原文本读屏与清晰显示，不安装系统字体。
 
 README 概念主图与小物副图沿用本项目生成艺术素材排版合成，明确标注概念示意。Noto 字体只以栅格文字进入图片，不分发字体本体，原版权与授权文本见 images/font-notices；来源说明见 images/concept-sources.txt。实际 UI GIF 使用隔离测试数据，与静态概念图分开标注。
+
+`ui/assets/cream-grain.png` 为本项目自行生成的透明静态纸纹，仅用于番茄钟背景和收藏面板，未使用参考图像素。原角色与房间艺术 PNG 保持不变。
