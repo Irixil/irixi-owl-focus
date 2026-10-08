@@ -18,7 +18,8 @@ function fixture(saved) {
   const send = (type, extra = {}) => service.dispatch({ type, requestId: `req-${++requests}`, sessionId: service.snapshot().active?.id, ...extra });
   const step = (ms, wall = ms) => { sample.mono += ms; sample.wall += wall; return service.tick(); };
   const run = seconds => { for (let i = 0; i < seconds; i++) step(1000); };
-  return { store, service, send, step, run };
+  const elapse = ms => { sample.mono += ms; sample.wall += ms; };
+  return { store, service, send, step, run, elapse };
 }
 
 test('暂停60秒不计时；恢复只累计实际运行，读快照不驱动计时', () => {
@@ -131,4 +132,38 @@ test('旧番茄钟秒数原样保留；不足一分钟的真实专注不会造�
  const f=fixture();const first=f.send('start',{task:'保留5分30秒',seconds:330});assert.equal(first.active.durationMs,330000);f.run(1);f.send('end');
  const short=f.send('start',{task:'原秒钟设置',seconds:2});assert.equal(short.active.durationMs,2000);f.run(2);assert.equal(f.service.snapshot().totalFocusMs,3000);assert.equal(f.service.snapshot().creditedMinutes,0);assert.equal(f.service.snapshot().settledFocusMs,3000);
  assert.throws(()=>f.send('start',{task:'无效',seconds:0}));assert.throws(()=>f.send('start',{task:'无效',seconds:10801}));
+});
+
+test('运行、暂停或休息可直接换轮：一笔提交，保留真实努力而不补足未完成时间',()=>{
+ for(const status of ['running','paused','break']){
+  const f=fixture();f.send(status==='break'?'break':'start',{task:'旧轮',minutes:status==='break'?5:90});f.run(59);
+  if(status==='paused')f.send('pause');
+  const before=f.service.snapshot(),revision=before.revision;
+  const command={type:'start-next',requestId:'direct-next',sessionId:before.active.id,task:'新的一件事',seconds:2220};
+  const next=f.service.dispatch(command);
+  assert.notEqual(next.active.id,before.active.id);assert.equal(next.active.durationMs,2220000);assert.equal(next.active.elapsedMs,0);
+  assert.equal(next.revision,revision+1);assert.equal(next.totalFocusMs,status==='break'?0:59000);assert.equal(next.settledFocusMs,next.totalFocusMs);
+  assert.equal(next.creditedMinutes,0);assert.equal(next.lastOutcome.outcome,'ended');assert.equal(next.lastOutcome.kind,status==='break'?'break':'focus');
+  f.service.dispatch(command);assert.equal(f.service.snapshot().active.id,next.active.id);
+  assert.throws(()=>f.service.dispatch({...command,requestId:'late-next'}),/状态已改变/);assert.equal(f.service.snapshot().active.id,next.active.id);
+  f.run(2);assert.equal(f.service.snapshot().totalFocusMs,(status==='break'?0:59000)+2000);validateState(f.store.read());
+ }
+});
+
+test('换轮参数无效、空任务或存储失败都不能先丢掉旧轮；恢复不补离线时间',()=>{
+ const f=fixture();f.send('start',{task:'保留旧轮',minutes:90});f.run(21);f.send('pause');const before=f.store.read();
+ for(const extra of [{task:' ',seconds:1500},{task:'无效',seconds:0},{task:'无效',seconds:10801}]){
+  assert.throws(()=>f.send('start-next',extra));assert.deepEqual(f.store.read(),before);assert.deepEqual(f.service.snapshot().active,before.active);
+ }
+ f.store.fail=true;assert.throws(()=>f.send('start-next',{task:'新轮',seconds:1500}),/disk full/);
+ assert.deepEqual(f.store.read(),before);assert.deepEqual(f.service.snapshot().active,before.active);assert.match(f.service.snapshot().fault,/保存失败/);
+ f.store.fail=false;const reopened=new FocusService(f.store,{makeId:()=> 'reopened-new-round'});assert.equal(reopened.snapshot().totalFocusMs,21000);assert.equal(reopened.snapshot().active.id,before.active.id);
+ const next=reopened.dispatch({type:'start-next',requestId:'reopened-direct-next',sessionId:before.active.id,task:'恢复后新轮',seconds:60});assert.equal(next.totalFocusMs,21000);assert.equal(next.settledFocusMs,21000);assert.equal(next.active.elapsedMs,0);
+});
+
+test('开始下一轮与旧轮自然终点重合仍可一次启动；按钮前的最后有效秒数只记一次',()=>{
+ const f=fixture();f.send('start',{task:'快到终点',seconds:2});f.run(1);f.elapse(1000);
+ const next=f.send('start-next',{task:'立即新一轮',seconds:60});assert.equal(next.active.task,'立即新一轮');assert.equal(next.active.elapsedMs,0);assert.equal(next.totalFocusMs,2000);assert.equal(next.settledFocusMs,2000);validateState(next);
+ const g=fixture();g.send('start',{task:'尚未完成',seconds:300});g.run(10);g.elapse(700);
+ const switched=g.send('start-next',{task:'新一轮',seconds:60});assert.equal(switched.totalFocusMs,10700);assert.equal(switched.settledFocusMs,10700);assert.equal(switched.active.elapsedMs,0);
 });
