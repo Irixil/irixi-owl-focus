@@ -14,7 +14,9 @@
     "verify:ui": "node scripts/start.cjs --verify-headless",
     "verify:room": "node scripts/start.cjs --verify-room",
     "verify:reopen": "node scripts/start.cjs --verify-reopen",
-    "demo:synthetic": "node scripts/cloud-preview.cjs"
+    "demo:synthetic": "node scripts/cloud-preview.cjs",
+    "verify:durations": "node scripts/start.cjs --verify-duration",
+    "verify:durations-reopen": "node scripts/start.cjs --verify-duration-reopen"
   },
   "devDependencies": {
     "electron": "44.0.0"

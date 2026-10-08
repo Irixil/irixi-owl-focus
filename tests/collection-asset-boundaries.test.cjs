@@ -82,7 +82,8 @@ test('REGRESSION: healthy thumbnail cannot authorize whole save after the main r
  const loads=[],delayedFailures=new Map();
  globalThis.Image=class {
   set src(url){this.tag=url.split('/').at(-1);loads.push(this.tag);let w=1254,h=1254;
-   if(this.tag.startsWith('glasses-')){w=800;h=520;}
+   if(this.tag==='paper-fibers.svg'){w=h=128;}
+   else if(this.tag.startsWith('glasses-')){w=800;h=520;}
    else if(this.tag.endsWith('-thumb.png')){w=h=256;}
    else if(/^(room-base|lamp-|rug-|plant-)/.test(this.tag)){w=1024;h=1536;}
    this.width=this.naturalWidth=w;this.height=this.naturalHeight=h;

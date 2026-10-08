@@ -21,3 +21,10 @@ README 的 GIF 是早期版本的演示，尚未覆盖当前竖版适配、内�
 现已按当前要求修正测试：等待竖版素材与角色注册完成；角色坐标先按0.64比例和原偏移进入房间，再用相机映射到CSS坐标；原PNG独立测得的两处凳腿、四处椅腿检查仍保留，并验证固定落座锚点512,935。装备改用可见图形收藏箱，检查整组预览和确认。修正版在隔离源码和当前独立仓库完整重跑通过，覆盖注视、轻拍、暂停时计时不变、长按／移动／取消不误回应、键盘回应、减少动效和四尺寸空任务提示。没有修改角色、图片或房间产品代码来迎合测试；这仍是离屏独立入口验证，不能冒充系统鼠标或真实专注解锁。
 
 纸感参考图官方下载失败，未读取实际像素，不能声称逐像素对照。诊断截图、参考资料和隔离存档不进入公开源码。
+
+
+## 59 duration / visible paper correction
+
+User feedback reopened58 paper visibility: the old CSS grain sat behind an opaque room canvas, so its resource/opacity assertions were insufficient. Current59 draws neutral static paper after base and before original art, at CSS display scale; four original-size package canvas views reviewed and PNG art unchanged. Actual hidden package/host tests typed focus37/rest7, saved and synced both views, reloaded and restarted, and observed37-minute countdown advance; existing running/paused round rejects duration resizing and retains effort. Independent `verify:durations` then `verify:durations-reopen` exercises its actual backend/config file, invalid-save preservation and no offline credit.
+
+Earlier desktop proofs above are58 compatible component evidence. Current59 true foreground notch/embedded display and formal installation are still pending desktop coordination; old1pixel sufficient and old grain visible conclusions do not certify59. No screenshot upload or new reference pixel comparison.
