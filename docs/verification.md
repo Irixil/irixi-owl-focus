@@ -23,8 +23,16 @@ README 的 GIF 是早期版本的演示，尚未覆盖当前竖版适配、内�
 纸感参考图官方下载失败，未读取实际像素，不能声称逐像素对照。诊断截图、参考资料和隔离存档不进入公开源码。
 
 
-## 59 duration / visible paper correction
+## 59时长与纸纹修正
 
-User feedback reopened58 paper visibility: the old CSS grain sat behind an opaque room canvas, so its resource/opacity assertions were insufficient. Current59 draws neutral static paper after base and before original art, at CSS display scale; four original-size package canvas views reviewed and PNG art unchanged. Actual hidden package/host tests typed focus37/rest7, saved and synced both views, reloaded and restarted, and observed37-minute countdown advance; existing running/paused round rejects duration resizing and retains effort. Independent `verify:durations` then `verify:durations-reopen` exercises its actual backend/config file, invalid-save preservation and no offline credit.
+此前58的纸纹位于不透明房间画布后方，资源存在或透明度检查不能证明可见。59在背景与原角色、道具之间绘制静态纸纹，按显示尺寸保持纹理尺度；最终包四种正常尺寸已实际查看，原配色和PNG美术字节保持。
 
-Earlier desktop proofs above are58 compatible component evidence. Current59 true foreground notch/embedded display and formal installation are still pending desktop coordination; old1pixel sufficient and old grain visible conclusions do not certify59. No screenshot upload or new reference pixel comparison.
+最终包真实宿主的隔离检查输入37分钟专注、7分钟休息，验证保存、双视图同步、刷新、新进程恢复及实际倒计时。新增命令`verify:durations`与`verify:durations-reopen`覆盖独立入口的真实设置文件、无效保存保护、暂停轮次保护和不计离线时间。未完成的运行或暂停轮次不能改时长；下一轮使用保存的设置，不重置既有记录。
+
+59在本机真实前台、非离屏、2倍缩放环境中检查了刘海：358×64物理像素图的可见绘制边界为[3,0,355,61]，左右及底部累计各内收3个物理像素；58对应边界为[1,0,357,63]。四种真实内嵌尺寸的纸纹已查看。正式工具箱使用原稳定签名备份替换并普通重开，布局、权益、累计时间、暂停轮次及设置核对保留，存档仍为schema9。
+
+本次新的系统鼠标脚本发生监听与坐标检查失败，已停止，不能记为新物理点击验收通过。导航和展开宿主代码与已实际鼠标验收的58包逐字节相同，原生代码去掉签名后也相同；本次可用页面的内部切换另行检查。隔离资料默认关闭剪贴历史，本次未为测试开启采集。
+
+已实际使用Ponytail默认full及Ponytail audit技能审查实现和冗余引用；审计本身只生成报告，可恢复清理依据用户另行明确授权执行。约2.29GB旧构建、编译缓存与失效装饰纹理移入本机可恢复目录，没有永久删除，也没有因此释放磁盘空间。角色、道具、字体及许可证、真实资料、证据和必要回退保留；清理后重建并复测收藏、房间、动作、时长与重开。
+
+诊断截图、用户资料、备份、证据和本机签名安装包不随公开源码发布。参考图原像素仍未取得，没有新增逐像素参考对照、其他真实设备、模型服务或全项目P0通过的结论。
