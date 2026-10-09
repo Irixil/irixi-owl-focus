@@ -1,5 +1,7 @@
 # iRIXI 猫头鹰番茄钟
 
+项目创作者：**[IRiXi](https://github.com/Irixil)**（GitHub：Irixil）。原始仓库：[Irixil/irixi-owl-focus](https://github.com/Irixil/irixi-owl-focus) · [作者与推荐署名](ATTRIBUTION.md)。
+
 让专注有一间自己的小屋。写下这次想做的一件事，和捧着茶杯的红围巾猫头鹰一起开始；再用喜欢的灯、地毯、植物和挂画布置房间。
 
 ![iRIXI Owl Focus 产品概念示意](docs/images/owl-focus-concept-hero.webp)
